@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<meta charset="UTF-8">
+<meta name="author" content="Max Leung">
+<style>
+body {
+	margin: 0;
+}
+
+.border {
+	stroke: white;
+	stroke-width: 0.5px;
+}
+
+.legend-box {
+	stroke: white;
+	stroke-width: 1px;
+}
+
+.legend-title, .legend-label-max, .legend-label-min {
+	font-family: Arial;
+	font-size: 12px;
+	fill: black;
+}
+
+.legend-title {
+	font-weight: bold;
+}
+
+.province-name {
+	font-family: Arial;
+	font-size: 45px;
+	font-weight: bold;
+	fill: black;	
+}
+
+.province-value {
+	font-family: Arial;
+	font-size: 20px;
+	fill: black;	
+}
+
+.tooltip {
+	position: absolute;
+	width: 120px;
+	height: 35px;
+	background-color: white;
+	border: 2px solid #00204A;
+	padding-left: 5px;
+	padding-top: 5px;
+	opacity: 0;
+}
+
+.tooltip-province, .tooltip-value, .tooltip-year{
+	font-family: Arial;
+	font-size: 12px;
+	fill: black;	
+}
+
+.tooltip-province {
+	font-size: 15px;
+	font-weight: bold;
+}
+
+.line {
+	fill: none;
+	stroke-width: 2px;
+	opacity: 0.5;
+}
+
+.x-axis, .y-axis {
+	font-family: Arial;
+	font-size: 8px;
+	stroke-width: 0;
+}
+
+#slider {
+	display: block;
+	-webkit-appearance: none;
+	width: 1000px;
+	height: 10px;
+	margin: 0;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	border-radius: 100%;
+	width: 20px;
+	height: 20px;
+	background: #FF6F3C;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider:active::-webkit-slider-thumb {
+	width: 30px;
+	height: 30px;
+	background: #FF6F3C;
+}
+
+.slider-year {
+	font-family: Arial;
+	font-size: 45px;
+	font-weight: bold;
+	fill: black;
+}
+
+footer {
+	font-family: Arial;
+	font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+<div class="tooltip">
+	<div class="tooltip-province"></div>
+	<div class="tooltip-year"></div>
+	<div class="tooltip-value"></div>
+</div>
+<svg width=1000 height=575></svg>
+<script>
+var margin = {top: 10, right: 10, bottom: 10, left: 10};
+
+var svg = d3.select("svg");
+
+var g = svg.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var width = +svg.attr("width") - margin.left - margin.right,
+	height = +svg.attr("height") - margin.top - margin.bottom;
+	
+var minColor = "#FFC93C",
+	maxColor = "#FF6F3C",
+	selectedColor = "#FF6F3C";
+	
+var valueUnit = " RMB";
+
+var colorScale = d3.scaleLinear()
+					.range([minColor, maxColor])
+					.interpolate(d3.interpolateHcl);	
+
+var numberRound = d3.format(",.0f");					
+	
+var projection = d3.geoMercator()
+					.center([103.8191, 36.56177])
+					.scale(700)
+					.translate([width / 2, height / 2 + 30]);
+
+var path = d3.geoPath()
+			.projection(projection);
+
+
+var marginLine = {top: 10, right: 40, bottom: 10, left: 10};
+
+var widthLineNoMargin = 330,
+	heightLineNoMargin = 330;
+
+var widthLine = widthLineNoMargin - marginLine.left - marginLine.right,
+	heightLine = heightLineNoMargin - marginLine.top - marginLine.bottom;
+
+var xScale = d3.scaleLinear()
+					.range([0, widthLine]);
+				
+var	yScale = d3.scaleLinear()
+					.range([heightLine, 0]);
+					
+var drawLine = d3.line()
+				.curve(d3.curveBasis)
+				.x(function(d){ return xScale(d.year);})
+				.y(function(d){ return yScale(d.value);});			
+
+d3.queue()
+	.defer(d3.json, "provinces.json")
+	.defer(d3.csv, "data.csv", getData)
+	.await(drawMap);
+	
+function getData(d){
+	return d;
+}
+	
+function drawMap(error, border, data){
+
+	var yearArray = Object.keys(data[0]).slice(0,-1);
+
+	var dataByProvince = d3.map(data, function(d){ return d.Region;});
+									
+	function dataByYear(year){
+				return dataByProvince.values()
+									.map(function(d){
+											return {Region: d.Region, Values: +d[year]};
+										});
+	}
+
+	var initialYear = d3.extent(yearArray)[1];
+	
+	var selectedDataByProvince = d3.map(dataByYear(initialYear), function(d){
+																	return d.Region;
+																});
+															
+	var dataForLines = dataByProvince.keys().map(function(province){
+													return {
+														provinceName: province,
+														provinceValues: dataForLine(province)
+													};
+												});
+												
+	function dataForLine(province){
+		return yearArray.map(function(year){
+								return {
+									year: year,
+									value: +dataByProvince.get(province)[year]
+								};
+							});
+	}
+	
+	var yMaxValue = d3.max(data, function(province){
+										return d3.max(yearArray.map(function(year){
+																		return +province[year];
+																	})
+										);
+									});
+									
+	var yMinValue = d3.min(data, function(province){
+										return d3.min(yearArray.map(function(year){
+																		return +province[year];
+																	})
+										);
+									});		
+
+	xScale.domain(d3.extent(yearArray));
+	yScale.domain([yMinValue, yMaxValue]);
+	colorScale.domain([yMinValue, yMaxValue]);															
+	
+//	var maxValue = d3.max(dataByYear(initialYear), function(d){ return d.Values;}),
+//		minValue = d3.min(dataByYear(initialYear), function(d){ return d.Values;});
+	
+	g.append("g")
+		.attr("class", "map")
+		.selectAll(".border")
+		.data(border.features)
+		.enter()
+		.append("path")
+		.attr("class", function(d){ return d.properties.NAME_1 + " border";})
+		.attr("d", path)
+		.style("fill", function(d){ 
+							return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+						})
+		.on("mouseover", function(d){
+							var selectedProvince = d3.select(this);
+							selectedProvince.style("fill", selectedColor);
+							selectedProvince.style("stroke-width", "4px");
+							
+							d3.select(".province-name")
+								.text(d.properties.NAME_1);
+							d3.select(".province-value")
+								.text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+								
+							var xy = d3.mouse(this);
+							d3.select(".tooltip")
+								.style("opacity", 0.8)
+								.style("left", xy[0] + 30 + "px")
+								.style("top", xy[1] + 30 + "px");
+							d3.select(".tooltip-province")
+								.text(d.properties.NAME_1);							
+							d3.select(".tooltip-value")
+								.text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+							
+							var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
+							
+							selectedLine.style("stroke", selectedColor);
+							selectedLine.style("stroke-width", "4px");
+							selectedLine.style("opacity", "1");
+							;
+						})
+		.on("mouseout", function(d){
+							var selectedProvince = d3.select(this);
+							selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values));
+							selectedProvince.style("stroke-width", "0.5px");		
+							
+							d3.select(".province-name")
+								.text("");
+							d3.select(".province-value")
+								.text("");
+								
+							d3.select(".tooltip")
+								.style("opacity", 0);
+
+							var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
+							
+							selectedLine.style("stroke", minColor);
+							selectedLine.style("stroke-width", "2px");
+							selectedLine.style("opacity", "0.5");							
+							
+						});	
+	
+	var gLine = g.append("g")
+				.attr("transform", "translate(" + (width - widthLineNoMargin) + ", " + (height - heightLineNoMargin) + ")")
+				.append("g")
+				.attr("transform", "translate(" + marginLine.left + ", " + marginLine.top + ")")
+				.attr("class", "lines");
+
+	gLine.selectAll(".line")
+		.data(dataForLines)
+		.enter()
+		.append("path")
+		.attr("class", function(d){ return d.provinceName + " line";})
+		.attr("d", function(d){ return drawLine(d.provinceValues);})
+		.style("stroke", minColor)
+		.on("mouseover", function(d){
+							var selectedLine = d3.select(this);
+							selectedLine.style("stroke", selectedColor);
+							selectedLine.style("stroke-width", "4px");
+							selectedLine.style("opacity", "1");
+														
+							d3.select(".province-name")
+								.text(d.provinceName);
+						//	d3.select(".province-value")
+						//		.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
+							
+							var selectedProvince = d3.select("." + d.provinceName + ".border");
+							selectedProvince.style("fill", selectedColor);
+							selectedProvince.style("stroke-width", "4px");	
+						})
+		.on("mouseout", function(d){
+							var selectedLine = d3.select(this);
+							selectedLine.style("stroke", minColor);
+							selectedLine.style("stroke-width", "2px");
+							selectedLine.style("opacity", "0.5");
+							
+							d3.select(".province-name")
+								.text("");
+						//	d3.select(".province-value")
+						//		.text("");							
+							
+							var selectedProvince = d3.select("." + d.provinceName + ".border");
+							selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
+							selectedProvince.style("stroke-width", "0.5px");
+						});
+		
+	gLine.append("g")
+			.attr("class", "x-axis")
+			.attr("transform", "translate(0, " + heightLine + ")")
+			.call(d3.axisBottom(xScale).tickFormat(d3.format(".0f")));
+			
+	gLine.append("g")
+			.attr("class", "y-axis")
+			.attr("transform", "translate(" + widthLine + ", 0)")
+			.call(d3.axisRight(yScale));
+			
+
+	var legendBoxWidth = 35;
+	
+	g.append("g")
+		.attr("class", "legend-boxes")
+		.selectAll(".legend-box")
+		.data([yMaxValue, (yMaxValue - yMinValue)/2, (yMaxValue - yMinValue)/3, (yMaxValue - yMinValue)/4, yMinValue])
+		.enter()
+		.append("rect")
+		.attr("class", "legend-box")
+		.attr("width", legendBoxWidth)
+		.attr("height", 15)
+		.attr("x", function(d, i){ return width - legendBoxWidth - legendBoxWidth * i;})
+		.attr("y", 20)
+		.style("fill", function(d){ return colorScale(d)});
+		
+	g.append("text")
+		.attr("class", "legend-title")
+		.attr("x", width - legendBoxWidth * 5)
+		.attr("y", 9)
+		.text("Average Annual Consumption");
+		
+	g.append("text")
+		.attr("class", "legend-title")
+		.attr("x", width - legendBoxWidth * 5)
+		.attr("y", 19)
+		.text("Expenditure per Capita (RMB)");		
+	
+	g.append("text")
+		.attr("class", "legend-label-min")
+		.attr("x", width - legendBoxWidth * 5)
+		.attr("y", 20 + 15 + 12)
+		.text(d3.format(",.0f")(yMinValue));
+		
+	g.append("text")
+		.attr("class", "legend-label-max")
+		.attr("x", width - legendBoxWidth)
+		.attr("y", 20 + 15 + 12)
+		.text(d3.format(",.0f")(yMaxValue));	
+		
+	g.append("text")
+		.attr("class", "province-name")
+		.attr("x", 0)
+		.attr("y", 45);
+		
+	g.append("text")
+		.attr("class", "province-value")
+		.attr("x", 0)
+		.attr("y", 70);
+
+	g.append("text")
+		.attr("class", "slider-year")
+		.attr("x", 0)
+		.attr("y", height);
+		
+	d3.select("body")
+		.append("input")
+		.attr("id", "slider")
+		.attr("type", "range")
+		.attr("min", d3.extent(yearArray)[0])
+		.attr("max", d3.extent(yearArray)[1])
+		.attr("step", 1)
+		.attr("value", d3.extent(yearArray)[1])
+		.style("background", minColor);
+	//	.attr("list", "slider-ticks");
+	
+	d3.select("body")
+						.append("footer")
+						.append("em")
+						.text("Source: National Bureau of Statistics of China; Author of this graph: Max Leung")
+	/*
+	d3.select("body")
+		.append("datalist")
+		.attr("id", "slider-ticks")
+		.selectAll(".slider-tick")
+		.data(yearArray)
+		.enter()
+		.append("option")
+		.attr("value", function(d){ return d;})
+		.attr("label", function(d){ return d;});
+	*/
+	
+	d3.select(".slider-year").text(initialYear);		
+	
+	document.getElementById("slider").oninput = function(){
+		var selectedYear = this.value;
+		changeYear(selectedYear);
+	}
+	
+	function changeYear(selectedYear){
+		var selectedDataByProvince = d3.map(dataByYear(selectedYear), function(d){
+																			return d.Region;
+																		});
+		
+	//	var maxValue = d3.max(dataByYear(selectedYear), function(d){ return d.Values;}),
+	//		minValue = d3.min(dataByYear(selectedYear), function(d){ return d.Values;});
+			
+
+	//	colorScale.domain([minValue, maxValue]);
+
+		d3.selectAll(".border")
+			.style("fill", function(d){ 
+							return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+						})
+			.on("mouseover", function(d){
+								var selectedProvince = d3.select(this);
+								selectedProvince.style("fill", selectedColor);
+								selectedProvince.style("stroke-width", "4px");
+								
+								d3.select(".province-name")
+									.text(d.properties.NAME_1);
+								d3.select(".province-value")
+									.text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+									
+								var xy = d3.mouse(this);
+								d3.select(".tooltip")
+									.style("opacity", 0.8)
+									.style("left", xy[0] + 30 + "px")
+									.style("top", xy[1] + 30 + "px");
+								d3.select(".tooltip-province")
+									.text(d.properties.NAME_1);
+								d3.select(".tooltip-value")
+									.text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+								
+								var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
+								
+								selectedLine.style("stroke", selectedColor);
+								selectedLine.style("stroke-width", "4px");
+								selectedLine.style("opacity", "1");
+							})
+			.on("mouseout", function(d){
+								var selectedProvince = d3.select(this);
+								selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values));
+								selectedProvince.style("stroke-width", "0.5px");		
+								
+								d3.select(".province-name")
+									.text("");
+								d3.select(".province-value")
+									.text("");
+									
+								d3.select(".tooltip")
+									.style("opacity", 0);
+
+								var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
+								
+								selectedLine.style("stroke", minColor);
+								selectedLine.style("stroke-width", "2px");
+								selectedLine.style("opacity", "0.5");
+							});	
+						
+	//	d3.select(".legend-label-min")
+	//		.text(d3.format(",.0f")(minValue));
+			
+	//	d3.select(".legend-label-max")
+	//		.text(d3.format(",.0f")(maxValue));		
+
+		d3.selectAll(".line")
+			.on("mouseover", function(d){
+								var selectedLine = d3.select(this);
+								selectedLine.style("stroke", selectedColor);
+								selectedLine.style("stroke-width", "4px");
+								selectedLine.style("opacity", "1");
+								
+								d3.select(".province-name")
+									.text(d.provinceName);
+						//		d3.select(".province-value")
+						//			.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
+								
+								var selectedProvince = d3.select("." + d.provinceName + ".border");
+								selectedProvince.style("fill", selectedColor);
+								selectedProvince.style("stroke-width", "4px");
+							})
+			.on("mouseout", function(d){
+								var selectedLine = d3.select(this);
+								selectedLine.style("stroke", minColor);
+								selectedLine.style("stroke-width", "2px");
+								selectedLine.style("opacity", "0.5");
+								
+								d3.select(".province-name")
+									.text("");
+						//		d3.select(".province-value")
+						//			.text("");							
+								
+								var selectedProvince = d3.select("." + d.provinceName + ".border");
+								selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
+								selectedProvince.style("stroke-width", "0.5px");
+							});
+		
+		d3.select(".slider-year").text(selectedYear);
+	}
+}
+</script>
+</body>
+</html>
+
