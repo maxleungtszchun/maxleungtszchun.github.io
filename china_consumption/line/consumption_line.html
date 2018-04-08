@@ -11,8 +11,8 @@ body {
 
 #chart {
 	position: absoulte;
-	width: 100%;
-	height: 100vh;
+	width: 600px;
+	height: 300px;
 }
 
 .highcharts-tooltip-box {
@@ -25,7 +25,7 @@ body {
 
 footer {
 	font-family: Arial;
-	font-size: 12px;
+	font-size: 8px;
 }
 </style>
 
@@ -33,7 +33,7 @@ footer {
 
 <body>
 <div id="chart"></div>
-<footer><em>Source: NBSC</em></footer>
+<footer><em>Source: National Bureau of Statistics of China</em></footer>
 
 <script>
 Highcharts.chart("chart", {
@@ -43,7 +43,6 @@ Highcharts.chart("chart", {
 		//margin: [0, 0, 0, 0],
 		style: {
 			fontFamily: "Arial",
-			fontSize: 12,
 			color: "black"			
 		}
 	},
@@ -54,7 +53,7 @@ Highcharts.chart("chart", {
 		align: "left",
 		text: "Monthly Consumption Expenditure in China ",
 		style: {
-			fontSize: 20,
+			fontSize: 16,
 			fontWeight: "bold",
 		}
 	},
@@ -77,11 +76,11 @@ Highcharts.chart("chart", {
 	},	
 	yAxis: {
 		title: {
-			text: "Monthly Consumption Expenditure (Unit: 100 million RMB)",
+			text: "Unit: 100 million RMB",
 			align: "high",
 			rotation: 0,
 			reserveSpace: false,
-			x: -310,
+			x: -115,
 			y: -20,
 			style: {
 				color: "black"
