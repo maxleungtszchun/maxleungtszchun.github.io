@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<title>drilldown</title>
+<style>
+body {
+	margin: 0;
+}
+
+#chart {
+	position: absoulte;
+	width: 100%;
+	height: 100vh;
+}
+
+.highcharts-tooltip-box {
+	opacity: 0.5;
+}
+
+footer {
+	font-family: Arial;
+	font-size: 12px;
+}
+</style>
+
+</head>
+
+<body>
+<div id="chart"></div>
+<footer><em>Source: National Bureau of Statistics of China</em></footer>
+
+<script>
+var name = "Furniture";
+
+d3.csv("data.csv", cleanData, function(error, data){
+	
+	var dataByName = d3.map(data, function(d){ return d.name;});
+	console.log(getArray(dataByName.get(name)));
+	
+	Highcharts.chart("chart", {
+		chart: {
+			backgroundColor: "transparent",
+			borderWidth: 0,
+			//margin: [0, 0, 0, 0],
+			style: {
+				fontFamily: "Arial",
+				fontSize: 12,
+				color: "black"			
+			}
+		},
+		credits: {
+			enabled: false
+		},
+		title: {
+			align: "left",
+			text: name + " Expenditure in China",
+			style: {
+				fontSize: 20,
+				fontWeight: "bold",
+			}
+		},
+	//	subtitle: {
+	//		align: "left",
+	//		text: "From Jan 2010 to Dec 2017 for Enterprises above Designated Size",
+	//		style: {
+	//			color: "black"
+	//		}
+	//	},
+		xAxis: {
+			type: "datetime",
+			labels: {
+				style: {
+					color: "black"
+				}
+			},
+			lineColor: "black",
+			tickWidth: 0
+		},	
+		yAxis: {
+			title: {
+				text: "% of Total Retail Sales",
+				align: "high",
+				rotation: 0,
+				reserveSpace: false,
+				x: -120,
+				y: -20,
+				style: {
+					color: "black"
+				},
+			},
+			labels: {
+				align: "right",
+				x: 0,
+				y: -2,
+				formatter: function(){
+								return Highcharts.numberFormat(this.value * 100, 2, ".", ",") + "%</b>";
+							},			
+				style: {
+					color: "black"
+				}		
+			},
+			opposite: true,
+		//	tickInterval: 0.02,		
+			gridLineColor: "black",
+			gridLineWidth: 0.25
+		},
+		tooltip: {
+			backgroundColor: "white",
+			borderColor: "black",
+			borderWidth: 1,
+			hideDelay: 0,
+			formatter: function(){
+							return "% of " + name + " Expenditure in Total Retail Sales <br> <b>" + 
+							Highcharts.dateFormat("%Y-%m", this.x) + ": " + Highcharts.numberFormat(this.y * 100, 2, ".", ",") + "%</b>";
+						},
+			style: {
+				color: "black",
+				fontWeight: "normal"
+			}
+		},
+		legend: {
+			enabled: false
+		},
+		plotOptions: {
+			line: {
+				pointStart: Date.UTC(2010, 0, 1),
+				pointIntervalUnit: "month",		
+				stickyTracking: false,
+				lineWidth: 3,
+				marker: {
+					enabled: false,
+					symbol: "circle"
+				}
+			}
+		},
+		series: [{
+			name: name + " Expenditure in China",
+			type: "line",
+			color: "#539DDB",
+			//https://stackoverflow.com/questions/12722043/how-to-hyperlink-bar-graph-in-highcharts
+			//The following eight codes are inspired by the answer above								
+			cursor: 'pointer',
+			point: {
+				events: {
+					click: function () {
+						location.href = "consumption_bars.html";
+					}
+				}
+			},		
+			data: getArray(dataByName.get(name))
+		}]
+
+	});
+});
+
+function cleanData(d){
+	return d;
+}
+
+function getArray(obj){
+	return	Object.keys(obj).slice(0, -1).map(function(key){
+												return +obj[key];
+											})
+}
+
+
+
+</script>
+
+</body>
+
+
+</html>

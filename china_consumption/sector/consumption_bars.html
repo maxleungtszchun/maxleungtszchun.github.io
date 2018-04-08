@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<meta charset="UTF-8">
+<title>Consumption Expenditure in China (By Sectors)</title>
+<style>
+body {
+	margin: 0;
+}
+
+#chart {
+	position: absoulte;
+	width: 100%;
+	height: 100vh;
+}
+
+.highcharts-tooltip-box {
+	opacity: 0.5;
+}
+
+footer {
+	font-family: Arial;
+	font-size: 12px;
+}
+</style>
+
+</head>
+
+<body>
+<div id="chart"></div>
+<footer><em>Source: National Bureau of Statistics of China</em></footer>
+
+<script>
+Highcharts.chart("chart", {
+	chart: {
+		inverted: true,
+		backgroundColor: "transparent",
+		borderWidth: 0,
+		marginRight: 50,
+		style: {
+			fontFamily: "Arial",
+			fontSize: 12,
+			color: "black"			
+		}
+	},
+	credits: {
+		enabled: false
+	},
+	title: {
+		align: "left",
+		text: "Consumption Expenditure in China (By Sectors)",
+		style: {
+			fontSize: 20,
+			fontWeight: "bold",
+		}
+	},
+//	subtitle: {
+//		align: "left",
+//		text: "From Jan 2010 to Dec 2017 for Enterprises above Designated Size",
+//		style: {
+//			color: "black"
+//		}
+//	},
+	xAxis: {
+		labels: {
+			style: {
+				color: "black"
+			}
+		},
+		lineWidth: 0,
+		tickWidth: 0,
+		offset: -10,
+		categories : ['Automobile',
+						'Petroleum and Related Products',
+						'Grain and Oil, Foodstuff',
+						'Garments',
+						'Household Appliances and Video Equipments',
+						'Traditional Chinese and Western Medicine',
+						'Others',
+						'Commodities',
+						'Footwear, Hats, Knitwear',
+						'Tobacco and Liquor',
+						'Cultrual and Office Appliances',
+						'Communication Appliances',
+						'Building and Decoration Materials',
+						'Gold and Silver Jewelry',
+						'Furniture',
+						'Cosmetics',
+						'Beverages',
+						'Newspapers and Magazines',
+						'Sports and Recreational Articles']
+	},	
+	yAxis: {
+		title: {
+			text: "% of Total Retail Sales from 2010 to 2017",
+			align: "high",
+			reserveSpace: false,
+			style: {
+				"color": "black"
+			},
+			x: 20,
+			y: 5
+		},
+		labels: {
+			align: "left",
+			x: 0,
+			y: 0,
+			style: {
+				color: "black"
+			},
+			formatter: function(){
+							return Highcharts.numberFormat(this.value * 100, 0, ".", ",") + "%";
+						}
+		},
+		opposite: true,			
+		gridLineColor: "black",
+		gridLineWidth: 0.25
+	},
+	tooltip: {
+		backgroundColor: "white",
+		borderColor: "black",
+		borderWidth: 1,
+		hideDelay: 0,
+		formatter: function(){
+						return this.series.name + "<br> <b>" + 
+						this.x + ": " + Highcharts.numberFormat(this.y * 100, 2, ".", ",") + "% </b>";
+					},
+		style: {
+			color: "black",
+			fontWeight: "normal"
+		}
+	},
+	legend: {
+		enabled: false
+	},
+	plotOptions: {
+		column: {
+			stickyTracking: false,
+			borderWidth: 0,
+			pointPadding: 0.1,
+			groupPadding: 0,
+			dataLabels: {
+				enabled: true,
+				align: "right",
+				borderWidth : 0,
+				formatter: function(){
+								return Highcharts.numberFormat(this.y * 100, 2, ".", ",") + "%";
+							},
+				style: {
+					textOutline: "none",
+					fontFamily: "Arial",
+					fontSize: 12,
+					color: "white"					
+				}
+			}
+		}
+	},
+	series: [{
+		name: "% of Total Retail Sales from 2010 to 2017",
+		type: "column",
+		color: "#539DDB",
+		//https://stackoverflow.com/questions/12722043/how-to-hyperlink-bar-graph-in-highcharts
+		//The following eight codes are inspired by the answer above								
+		cursor: 'pointer',
+		point: {
+			events: {
+				click: function () {
+					location.href = this.category + ".html";
+				}
+			}
+		},		
+		data: [0.271641207751221,
+				0.154677729633134,
+				0.0948084733947737,
+				0.0699619411071211,
+				0.0641806621538896,
+				0.0559313929662214,
+				0.047066756712482,
+				0.0358850307101671,
+				0.0287085616715579,
+				0.0281644247500839,
+				0.0224967048065513,
+				0.0221103739863931,
+				0.0220702191113419,
+				0.0218502624709341,
+				0.0180434780106661,
+				0.0150151098702601,
+				0.0141696835041344,
+				0.00884033871788041,
+				0.00437764867118694],
+	}]
+});
+
+</script>
+
+</body>
+
+
+</html>
