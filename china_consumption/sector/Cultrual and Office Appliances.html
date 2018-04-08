@@ -13,7 +13,7 @@ body {
 #chart {
 	position: absoulte;
 	width: 100%;
-	height: 100vh;
+	height: 580px;
 }
 
 .highcharts-tooltip-box {
@@ -31,7 +31,6 @@ footer {
 <body>
 <div id="chart"></div>
 <footer><em>Source: National Bureau of Statistics of China</em></footer>
-
 <script>
 var name = "Cultrual and Office Appliances";
 
@@ -47,7 +46,6 @@ d3.csv("data.csv", cleanData, function(error, data){
 			//margin: [0, 0, 0, 0],
 			style: {
 				fontFamily: "Arial",
-				fontSize: 12,
 				color: "black"			
 			}
 		},
@@ -58,7 +56,7 @@ d3.csv("data.csv", cleanData, function(error, data){
 			align: "left",
 			text: name + " Expenditure in China",
 			style: {
-				fontSize: 20,
+				fontSize: 16,
 				fontWeight: "bold",
 			}
 		},

@@ -12,7 +12,7 @@ body {
 #chart {
 	position: absoulte;
 	width: 100%;
-	height: 100vh;
+	height: 580px;
 }
 
 .highcharts-tooltip-box {
@@ -21,7 +21,7 @@ body {
 
 footer {
 	font-family: Arial;
-	font-size: 12px;
+	font-size: 8px;
 }
 </style>
 
@@ -40,7 +40,6 @@ Highcharts.chart("chart", {
 		marginRight: 50,
 		style: {
 			fontFamily: "Arial",
-			fontSize: 12,
 			color: "black"			
 		}
 	},
@@ -51,7 +50,7 @@ Highcharts.chart("chart", {
 		align: "left",
 		text: "Consumption Expenditure in China (By Sectors)",
 		style: {
-			fontSize: 20,
+			fontSize: 16,
 			fontWeight: "bold",
 		}
 	},
@@ -65,7 +64,8 @@ Highcharts.chart("chart", {
 	xAxis: {
 		labels: {
 			style: {
-				color: "black"
+				color: "black",
+				fontSize: 9			
 			}
 		},
 		lineWidth: 0,
@@ -95,17 +95,18 @@ Highcharts.chart("chart", {
 		title: {
 			text: "% of Total Retail Sales from 2010 to 2017",
 			align: "high",
-			reserveSpace: false,
+			reserveSpace: true,
 			style: {
 				"color": "black"
 			},
-			x: 20,
-			y: 5
+			x: 22,
+			y: -12
 		},
 		labels: {
 			align: "left",
 			x: 0,
 			y: 0,
+			reserveSpace: false,
 			style: {
 				color: "black"
 			},
@@ -142,7 +143,7 @@ Highcharts.chart("chart", {
 			groupPadding: 0,
 			dataLabels: {
 				enabled: true,
-				align: "right",
+				align: "left",
 				borderWidth : 0,
 				formatter: function(){
 								return Highcharts.numberFormat(this.y * 100, 2, ".", ",") + "%";
@@ -150,8 +151,8 @@ Highcharts.chart("chart", {
 				style: {
 					textOutline: "none",
 					fontFamily: "Arial",
-					fontSize: 12,
-					color: "white"					
+					fontSize: 9,
+					color: "black"					
 				}
 			}
 		}
