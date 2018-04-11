@@ -30,6 +30,13 @@ body {
 	font-weight: bold;
 }
 
+.title {
+	font-family: Arial;
+	font-size: 20px;
+	font-weight: bold;
+	fill: black;	
+}
+
 .province-name {
 	font-family: Arial;
 	font-size: 45px;
@@ -40,6 +47,7 @@ body {
 .province-value {
 	font-family: Arial;
 	font-size: 20px;
+	font-weight: bold;	
 	fill: black;	
 }
 
@@ -137,7 +145,9 @@ var width = +svg.attr("width") - margin.left - margin.right,
 	
 var minColor = "#FFC93C",
 	maxColor = "#FF6F3C",
-	selectedColor = "#FF6F3C";
+	selectedColor = "#FF6F3C",
+	lineColor = "#FFC93C",
+	emptyColor = "#DFD3D3";
 	
 var valueUnit = " RMB";
 
@@ -248,8 +258,12 @@ function drawMap(error, border, data){
 		.append("path")
 		.attr("class", function(d){ return d.properties.NAME_1 + " border";})
 		.attr("d", path)
-		.style("fill", function(d){ 
-							return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+		.style("fill", function(d){
+							if (selectedDataByProvince.get(d.properties.NAME_1)) {
+								return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+							} else {
+								return emptyColor;
+							}
 						})
 		.on("mouseover", function(d){
 							var selectedProvince = d3.select(this);
@@ -258,8 +272,12 @@ function drawMap(error, border, data){
 							
 							d3.select(".province-name")
 								.text(d.properties.NAME_1);
-							d3.select(".province-value")
-								.text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+
+							if (selectedDataByProvince.get(d.properties.NAME_1)) {
+								d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+							} else {
+								d3.select(".province-value").text("No Data");
+							}
 								
 							var xy = d3.mouse(this);
 							d3.select(".tooltip")
@@ -267,9 +285,13 @@ function drawMap(error, border, data){
 								.style("left", xy[0] + 30 + "px")
 								.style("top", xy[1] + 30 + "px");
 							d3.select(".tooltip-province")
-								.text(d.properties.NAME_1);							
-							d3.select(".tooltip-value")
-								.text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+								.text(d.properties.NAME_1);
+
+							if (selectedDataByProvince.get(d.properties.NAME_1)) {
+								d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+							} else {
+								d3.select(".tooltip-value").text("No Data");
+							}
 							
 							var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
 							
@@ -280,7 +302,13 @@ function drawMap(error, border, data){
 						})
 		.on("mouseout", function(d){
 							var selectedProvince = d3.select(this);
-							selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values));
+							selectedProvince.style("fill", function(d){
+																if (selectedDataByProvince.get(d.properties.NAME_1)){
+																	return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+																} else {
+																	return emptyColor;
+																}
+															});
 							selectedProvince.style("stroke-width", "0.5px");		
 							
 							d3.select(".province-name")
@@ -293,7 +321,7 @@ function drawMap(error, border, data){
 
 							var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
 							
-							selectedLine.style("stroke", minColor);
+							selectedLine.style("stroke", lineColor);
 							selectedLine.style("stroke-width", "2px");
 							selectedLine.style("opacity", "0.5");							
 							
@@ -311,7 +339,7 @@ function drawMap(error, border, data){
 		.append("path")
 		.attr("class", function(d){ return d.provinceName + " line";})
 		.attr("d", function(d){ return drawLine(d.provinceValues);})
-		.style("stroke", minColor)
+		.style("stroke", lineColor)
 		.on("mouseover", function(d){
 							var selectedLine = d3.select(this);
 							selectedLine.style("stroke", selectedColor);
@@ -329,7 +357,7 @@ function drawMap(error, border, data){
 						})
 		.on("mouseout", function(d){
 							var selectedLine = d3.select(this);
-							selectedLine.style("stroke", minColor);
+							selectedLine.style("stroke", lineColor);
 							selectedLine.style("stroke-width", "2px");
 							selectedLine.style("opacity", "0.5");
 							
@@ -373,13 +401,13 @@ function drawMap(error, border, data){
 		.attr("class", "legend-title")
 		.attr("x", width - legendBoxWidth * 5)
 		.attr("y", 9)
-		.text("Average Private Consumption");
+		.text("Annual Private Consumption ");
 		
 	g.append("text")
 		.attr("class", "legend-title")
 		.attr("x", width - legendBoxWidth * 5)
 		.attr("y", 19)
-		.text("per Capita per Year (RMB)");		
+		.text("Expenditure per Capita (RMB)");		
 	
 	g.append("text")
 		.attr("class", "legend-label-min")
@@ -391,17 +419,23 @@ function drawMap(error, border, data){
 		.attr("class", "legend-label-max")
 		.attr("x", width - legendBoxWidth)
 		.attr("y", 20 + 15 + 12)
-		.text(d3.format(",.0f")(yMaxValue));	
+		.text(d3.format(",.0f")(yMaxValue));
+
+	g.append("text")
+		.attr("class", "title")
+		.attr("x", 0)
+		.attr("y", 20)
+		.text("Annual Private Consumption Expenditure per Capita");
 		
 	g.append("text")
 		.attr("class", "province-name")
 		.attr("x", 0)
-		.attr("y", 45);
+		.attr("y", 20 + 45);
 		
 	g.append("text")
 		.attr("class", "province-value")
 		.attr("x", 0)
-		.attr("y", 70);
+		.attr("y", 75 + 20);
 
 	g.append("text")
 		.attr("class", "slider-year")
@@ -416,13 +450,13 @@ function drawMap(error, border, data){
 		.attr("max", d3.extent(yearArray)[1])
 		.attr("step", 1)
 		.attr("value", d3.extent(yearArray)[1])
-		.style("background", minColor);
+		.style("background", lineColor);
 	//	.attr("list", "slider-ticks");
 	
 	d3.select("body")
-						.append("footer")
-						.append("em")
-						.text("Source: National Bureau of Statistics of China; Author of this graph: Max Leung")
+		.append("footer")
+		.append("em")
+		.text("Source: National Bureau of Statistics of China; Author of this d3 graph: Max Leung")
 	/*
 	d3.select("body")
 		.append("datalist")
@@ -454,9 +488,13 @@ function drawMap(error, border, data){
 	//	colorScale.domain([minValue, maxValue]);
 
 		d3.selectAll(".border")
-			.style("fill", function(d){ 
-							return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
-						})
+			.style("fill", function(d){
+								if (selectedDataByProvince.get(d.properties.NAME_1)) {
+									return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+								} else {
+									return emptyColor;
+								}
+							})
 			.on("mouseover", function(d){
 								var selectedProvince = d3.select(this);
 								selectedProvince.style("fill", selectedColor);
@@ -464,8 +502,12 @@ function drawMap(error, border, data){
 								
 								d3.select(".province-name")
 									.text(d.properties.NAME_1);
-								d3.select(".province-value")
-									.text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+
+								if (selectedDataByProvince.get(d.properties.NAME_1)) {
+									d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+								} else {
+									d3.select(".province-value").text("No Data");
+								}
 									
 								var xy = d3.mouse(this);
 								d3.select(".tooltip")
@@ -474,8 +516,12 @@ function drawMap(error, border, data){
 									.style("top", xy[1] + 30 + "px");
 								d3.select(".tooltip-province")
 									.text(d.properties.NAME_1);
-								d3.select(".tooltip-value")
-									.text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+
+								if (selectedDataByProvince.get(d.properties.NAME_1)) {
+									d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+								} else {
+									d3.select(".tooltip-value").text("No Data");
+								}
 								
 								var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
 								
@@ -485,7 +531,13 @@ function drawMap(error, border, data){
 							})
 			.on("mouseout", function(d){
 								var selectedProvince = d3.select(this);
-								selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values));
+								selectedProvince.style("fill", function(d){
+																	if (selectedDataByProvince.get(d.properties.NAME_1)){
+																		return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+																	} else {
+																		return emptyColor;
+																	}
+																});
 								selectedProvince.style("stroke-width", "0.5px");		
 								
 								d3.select(".province-name")
@@ -498,7 +550,7 @@ function drawMap(error, border, data){
 
 								var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
 								
-								selectedLine.style("stroke", minColor);
+								selectedLine.style("stroke", lineColor);
 								selectedLine.style("stroke-width", "2px");
 								selectedLine.style("opacity", "0.5");
 							});	
@@ -527,7 +579,7 @@ function drawMap(error, border, data){
 							})
 			.on("mouseout", function(d){
 								var selectedLine = d3.select(this);
-								selectedLine.style("stroke", minColor);
+								selectedLine.style("stroke", lineColor);
 								selectedLine.style("stroke-width", "2px");
 								selectedLine.style("opacity", "0.5");
 								
