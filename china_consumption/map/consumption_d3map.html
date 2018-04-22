@@ -111,6 +111,30 @@ body {
 	background: #FF6F3C;
 }
 
+#slider::-moz-range-track {
+	display: block;
+	width: 1000px;
+	height: 10px;
+	margin: 0;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider::-moz-range-thumb {
+	border-radius: 100%;
+	width: 20px;
+	height: 20px;
+	background: #FF6F3C;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider:active::-moz-range-thumb {
+	width: 30px;
+	height: 30px;
+	background: #FF6F3C;
+}
+
 .slider-year {
 	font-family: Arial;
 	font-size: 45px;
@@ -265,67 +289,8 @@ function drawMap(error, border, data){
 								return emptyColor;
 							}
 						})
-		.on("mouseover", function(d){
-							var selectedProvince = d3.select(this);
-							selectedProvince.style("fill", selectedColor);
-							selectedProvince.style("stroke-width", "4px");
-							
-							d3.select(".province-name")
-								.text(d.properties.NAME_1);
-
-							if (selectedDataByProvince.get(d.properties.NAME_1)) {
-								d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
-							} else {
-								d3.select(".province-value").text("No Data");
-							}
-								
-							var xy = d3.mouse(this);
-							d3.select(".tooltip")
-								.style("opacity", 0.8)
-								.style("left", xy[0] + 30 + "px")
-								.style("top", xy[1] + 30 + "px");
-							d3.select(".tooltip-province")
-								.text(d.properties.NAME_1);
-
-							if (selectedDataByProvince.get(d.properties.NAME_1)) {
-								d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
-							} else {
-								d3.select(".tooltip-value").text("No Data");
-							}
-							
-							var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
-							
-							selectedLine.style("stroke", selectedColor);
-							selectedLine.style("stroke-width", "4px");
-							selectedLine.style("opacity", "1");
-							;
-						})
-		.on("mouseout", function(d){
-							var selectedProvince = d3.select(this);
-							selectedProvince.style("fill", function(d){
-																if (selectedDataByProvince.get(d.properties.NAME_1)){
-																	return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
-																} else {
-																	return emptyColor;
-																}
-															});
-							selectedProvince.style("stroke-width", "0.5px");		
-							
-							d3.select(".province-name")
-								.text("");
-							d3.select(".province-value")
-								.text("");
-								
-							d3.select(".tooltip")
-								.style("opacity", 0);
-
-							var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
-							
-							selectedLine.style("stroke", lineColor);
-							selectedLine.style("stroke-width", "2px");
-							selectedLine.style("opacity", "0.5");							
-							
-						});	
+		.on("mouseover", provinceMouseOver)
+		.on("mouseout", provinceMouseOut);
 	
 	var gLine = g.append("g")
 				.attr("transform", "translate(" + (width - widthLineNoMargin) + ", " + (height - heightLineNoMargin) + ")")
@@ -340,37 +305,102 @@ function drawMap(error, border, data){
 		.attr("class", function(d){ return d.provinceName + " line";})
 		.attr("d", function(d){ return drawLine(d.provinceValues);})
 		.style("stroke", lineColor)
-		.on("mouseover", function(d){
-							var selectedLine = d3.select(this);
-							selectedLine.style("stroke", selectedColor);
-							selectedLine.style("stroke-width", "4px");
-							selectedLine.style("opacity", "1");
-														
-							d3.select(".province-name")
-								.text(d.provinceName);
-						//	d3.select(".province-value")
-						//		.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
-							
-							var selectedProvince = d3.select("." + d.provinceName + ".border");
-							selectedProvince.style("fill", selectedColor);
-							selectedProvince.style("stroke-width", "4px");	
-						})
-		.on("mouseout", function(d){
-							var selectedLine = d3.select(this);
-							selectedLine.style("stroke", lineColor);
-							selectedLine.style("stroke-width", "2px");
-							selectedLine.style("opacity", "0.5");
-							
-							d3.select(".province-name")
-								.text("");
-						//	d3.select(".province-value")
-						//		.text("");							
-							
-							var selectedProvince = d3.select("." + d.provinceName + ".border");
-							selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
-							selectedProvince.style("stroke-width", "0.5px");
-						});
+		.on("mouseover", lineMouseOver)
+		.on("mouseout", lineMouseOut);
 		
+	function provinceMouseOver(d){
+				var selectedProvince = d3.select(this);
+				selectedProvince.style("fill", selectedColor);
+				selectedProvince.style("stroke-width", "4px");
+				
+				d3.select(".province-name")
+					.text(d.properties.NAME_1);
+
+				if (selectedDataByProvince.get(d.properties.NAME_1)) {
+					d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+				} else {
+					d3.select(".province-value").text("No Data");
+				}
+					
+				var xy = d3.mouse(this);
+				d3.select(".tooltip")
+					.style("opacity", 0.8)
+					.style("left", xy[0] + 30 + "px")
+					.style("top", xy[1] + 30 + "px");
+				d3.select(".tooltip-province")
+					.text(d.properties.NAME_1);
+
+				if (selectedDataByProvince.get(d.properties.NAME_1)) {
+					d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+				} else {
+					d3.select(".tooltip-value").text("No Data");
+				}
+				
+				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
+				
+				selectedLine.style("stroke", selectedColor);
+				selectedLine.style("stroke-width", "4px");
+				selectedLine.style("opacity", "1");
+	}
+	
+	function provinceMouseOut(d){
+				var selectedProvince = d3.select(this);
+				selectedProvince.style("fill", function(d){
+													if (selectedDataByProvince.get(d.properties.NAME_1)){
+														return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+													} else {
+														return emptyColor;
+													}
+												});
+				selectedProvince.style("stroke-width", "0.5px");		
+				
+				d3.select(".province-name")
+					.text("");
+				d3.select(".province-value")
+					.text("");
+					
+				d3.select(".tooltip")
+					.style("opacity", 0);
+
+				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
+				
+				selectedLine.style("stroke", lineColor);
+				selectedLine.style("stroke-width", "2px");
+				selectedLine.style("opacity", "0.5");		
+	}		
+						
+	function lineMouseOver(d){
+				var selectedLine = d3.select(this);
+				selectedLine.style("stroke", selectedColor);
+				selectedLine.style("stroke-width", "4px");
+				selectedLine.style("opacity", "1");
+											
+				d3.select(".province-name")
+					.text(d.provinceName);
+			//	d3.select(".province-value")
+			//		.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
+				
+				var selectedProvince = d3.select("." + d.provinceName + ".border");
+				selectedProvince.style("fill", selectedColor);
+				selectedProvince.style("stroke-width", "4px");	
+	}
+	
+	function lineMouseOut(d){
+				var selectedLine = d3.select(this);
+				selectedLine.style("stroke", lineColor);
+				selectedLine.style("stroke-width", "2px");
+				selectedLine.style("opacity", "0.5");
+				
+				d3.select(".province-name")
+					.text("");
+			//	d3.select(".province-value")
+			//		.text("");							
+				
+				var selectedProvince = d3.select("." + d.provinceName + ".border");
+				selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
+				selectedProvince.style("stroke-width", "0.5px");		
+	}
+	
 	gLine.append("g")
 			.attr("class", "x-axis")
 			.attr("transform", "translate(0, " + heightLine + ")")
@@ -495,65 +525,8 @@ function drawMap(error, border, data){
 									return emptyColor;
 								}
 							})
-			.on("mouseover", function(d){
-								var selectedProvince = d3.select(this);
-								selectedProvince.style("fill", selectedColor);
-								selectedProvince.style("stroke-width", "4px");
-								
-								d3.select(".province-name")
-									.text(d.properties.NAME_1);
-
-								if (selectedDataByProvince.get(d.properties.NAME_1)) {
-									d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
-								} else {
-									d3.select(".province-value").text("No Data");
-								}
-									
-								var xy = d3.mouse(this);
-								d3.select(".tooltip")
-									.style("opacity", 0.8)
-									.style("left", xy[0] + 30 + "px")
-									.style("top", xy[1] + 30 + "px");
-								d3.select(".tooltip-province")
-									.text(d.properties.NAME_1);
-
-								if (selectedDataByProvince.get(d.properties.NAME_1)) {
-									d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
-								} else {
-									d3.select(".tooltip-value").text("No Data");
-								}
-								
-								var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
-								
-								selectedLine.style("stroke", selectedColor);
-								selectedLine.style("stroke-width", "4px");
-								selectedLine.style("opacity", "1");
-							})
-			.on("mouseout", function(d){
-								var selectedProvince = d3.select(this);
-								selectedProvince.style("fill", function(d){
-																	if (selectedDataByProvince.get(d.properties.NAME_1)){
-																		return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
-																	} else {
-																		return emptyColor;
-																	}
-																});
-								selectedProvince.style("stroke-width", "0.5px");		
-								
-								d3.select(".province-name")
-									.text("");
-								d3.select(".province-value")
-									.text("");
-									
-								d3.select(".tooltip")
-									.style("opacity", 0);
-
-								var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
-								
-								selectedLine.style("stroke", lineColor);
-								selectedLine.style("stroke-width", "2px");
-								selectedLine.style("opacity", "0.5");
-							});	
+			.on("mouseover", provinceMouseOver)
+			.on("mouseout", provinceMouseOut);	
 						
 	//	d3.select(".legend-label-min")
 	//		.text(d3.format(",.0f")(minValue));
@@ -562,36 +535,101 @@ function drawMap(error, border, data){
 	//		.text(d3.format(",.0f")(maxValue));		
 
 		d3.selectAll(".line")
-			.on("mouseover", function(d){
-								var selectedLine = d3.select(this);
-								selectedLine.style("stroke", selectedColor);
-								selectedLine.style("stroke-width", "4px");
-								selectedLine.style("opacity", "1");
-								
-								d3.select(".province-name")
-									.text(d.provinceName);
-						//		d3.select(".province-value")
-						//			.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
-								
-								var selectedProvince = d3.select("." + d.provinceName + ".border");
-								selectedProvince.style("fill", selectedColor);
-								selectedProvince.style("stroke-width", "4px");
-							})
-			.on("mouseout", function(d){
-								var selectedLine = d3.select(this);
-								selectedLine.style("stroke", lineColor);
-								selectedLine.style("stroke-width", "2px");
-								selectedLine.style("opacity", "0.5");
-								
-								d3.select(".province-name")
-									.text("");
-						//		d3.select(".province-value")
-						//			.text("");							
-								
-								var selectedProvince = d3.select("." + d.provinceName + ".border");
-								selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
-								selectedProvince.style("stroke-width", "0.5px");
-							});
+			.on("mouseover", lineMouseOver)
+			.on("mouseout", lineMouseOut);
+			
+		function provinceMouseOver(d){
+					var selectedProvince = d3.select(this);
+					selectedProvince.style("fill", selectedColor);
+					selectedProvince.style("stroke-width", "4px");
+					
+					d3.select(".province-name")
+						.text(d.properties.NAME_1);
+
+					if (selectedDataByProvince.get(d.properties.NAME_1)) {
+						d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+					} else {
+						d3.select(".province-value").text("No Data");
+					}
+						
+					var xy = d3.mouse(this);
+					d3.select(".tooltip")
+						.style("opacity", 0.8)
+						.style("left", xy[0] + 30 + "px")
+						.style("top", xy[1] + 30 + "px");
+					d3.select(".tooltip-province")
+						.text(d.properties.NAME_1);
+
+					if (selectedDataByProvince.get(d.properties.NAME_1)) {
+						d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+					} else {
+						d3.select(".tooltip-value").text("No Data");
+					}
+					
+					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
+					
+					selectedLine.style("stroke", selectedColor);
+					selectedLine.style("stroke-width", "4px");
+					selectedLine.style("opacity", "1");
+		}
+		
+		function provinceMouseOut(d){
+					var selectedProvince = d3.select(this);
+					selectedProvince.style("fill", function(d){
+														if (selectedDataByProvince.get(d.properties.NAME_1)){
+															return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+														} else {
+															return emptyColor;
+														}
+													});
+					selectedProvince.style("stroke-width", "0.5px");		
+					
+					d3.select(".province-name")
+						.text("");
+					d3.select(".province-value")
+						.text("");
+						
+					d3.select(".tooltip")
+						.style("opacity", 0);
+
+					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
+					
+					selectedLine.style("stroke", lineColor);
+					selectedLine.style("stroke-width", "2px");
+					selectedLine.style("opacity", "0.5");		
+		}		
+							
+		function lineMouseOver(d){
+					var selectedLine = d3.select(this);
+					selectedLine.style("stroke", selectedColor);
+					selectedLine.style("stroke-width", "4px");
+					selectedLine.style("opacity", "1");
+												
+					d3.select(".province-name")
+						.text(d.provinceName);
+				//	d3.select(".province-value")
+				//		.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
+					
+					var selectedProvince = d3.select("." + d.provinceName + ".border");
+					selectedProvince.style("fill", selectedColor);
+					selectedProvince.style("stroke-width", "4px");	
+		}
+		
+		function lineMouseOut(d){
+					var selectedLine = d3.select(this);
+					selectedLine.style("stroke", lineColor);
+					selectedLine.style("stroke-width", "2px");
+					selectedLine.style("opacity", "0.5");
+					
+					d3.select(".province-name")
+						.text("");
+				//	d3.select(".province-value")
+				//		.text("");							
+					
+					var selectedProvince = d3.select("." + d.provinceName + ".border");
+					selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
+					selectedProvince.style("stroke-width", "0.5px");		
+		}
 		
 		d3.select(".slider-year").text(selectedYear);
 	}
