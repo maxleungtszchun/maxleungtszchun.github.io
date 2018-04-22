@@ -7,6 +7,15 @@ body {
   font-family: Arial;
 }
 
+.page-header {
+  width: 100%;
+  height: 100vh;
+  background: black;
+  background-image: url("https://maxleungtszchun.github.io/vegetation_cover/gif/result.gif");
+  background-size: 100%;
+  padding-top: 0;
+}
+
 .project-name {
   margin-bottom: 0;
   font-size: 35px;
@@ -15,15 +24,6 @@ body {
 .author-name {
   margin: 0 0 0 0;
   font-weight: bold;
-}
-
-.page-header {
-  width: 100%;
-  height: 100vh;
-  background: black;
-  background-image: url("https://maxleungtszchun.github.io/vegetation_cover/gif/result.gif");
-  background-size: 100%;
-  padding-top: 0;
 }
 
 .project-tagline {
