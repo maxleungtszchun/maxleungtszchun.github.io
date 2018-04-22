@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rotate Earth</title>
 <script src="https://threejs.org/build/three.min.js"></script>
 <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -35,12 +34,6 @@ var geometry = new THREE.SphereGeometry(180, 50, 50),
 	sphere = new THREE.Mesh(geometry, material);
 
 material.map = THREE.ImageUtils.loadTexture("dnb_land_ocean_ice.2012.13500x6750.jpg");
-
-//material.bumpMap = THREE.ImageUtils.loadTexture("elev_bump_4k.jpg");
-//material.bumpScale = 0.005;
-
-//material.specularMap = THREE.ImageUtils.loadTexture("water_4k.png");
-//material.specular = new THREE.Color("grey");
 
 scene.add(sphere);
 
