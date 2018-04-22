@@ -41,7 +41,7 @@ var cloudsGeometry = new THREE.SphereGeometry(182, 50, 50),
 	cloudsMaterial = new THREE.MeshPhongMaterial(),
 	clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
 	
-cloudsMaterial.map = THREE.ImageUtils.loadTexture("storm_clouds_8k_transparent.png");
+cloudsMaterial.map = THREE.ImageUtils.loadTexture("storm_clouds_8k_transparent_compressed.png");
 cloudsMaterial.transparent = true;
 
 scene.add(clouds);
