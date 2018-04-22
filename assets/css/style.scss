@@ -8,6 +8,11 @@
   height: 100vh;
   background: black;
   background-image: url("https://maxleungtszchun.github.io/vegetation_cover/gif/result.gif");
-  background-size: 100% auto;
+  background-size: 100%;
   padding-top: 0;
+}
+
+.project-tagline {
+  position: absolute;
+  bottom: 0;
 }
