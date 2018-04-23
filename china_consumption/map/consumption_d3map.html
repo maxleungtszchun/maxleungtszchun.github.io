@@ -53,8 +53,6 @@ body {
 
 .tooltip {
 	position: absolute;
-	width: 120px;
-	height: 35px;
 	background-color: white;
 	border: 2px solid #FF6F3C;
 	padding-left: 5px;
@@ -62,14 +60,24 @@ body {
 	opacity: 0;
 }
 
-.tooltip-province, .tooltip-value, .tooltip-year{
+.tooltip-province,
+.tooltip-value,
+.tooltip-food,
+.tooltip-cloth,
+.tooltip-residence,
+.tooltip-household,
+.tooltip-health,
+.tooltip-transport,
+.tooltip-education,
+.tooltip-others {
 	font-family: Arial;
 	font-size: 12px;
 	fill: black;	
 }
 
 .tooltip-province {
-	font-size: 15px;
+	padding-bottom: 2px;
+	font-size: 17px;
 	font-weight: bold;
 }
 
@@ -81,7 +89,7 @@ body {
 
 .x-axis, .y-axis {
 	font-family: Arial;
-	font-size: 8px;
+	font-size: 6.5px;
 	stroke-width: 0;
 }
 
@@ -147,8 +155,15 @@ footer {
 <body>
 <div class="tooltip">
 	<div class="tooltip-province"></div>
-	<div class="tooltip-year"></div>
 	<div class="tooltip-value"></div>
+	<div class="tooltip-food"></div>
+	<div class="tooltip-cloth"></div>
+	<div class="tooltip-residence"></div>
+	<div class="tooltip-household"></div>
+	<div class="tooltip-health"></div>
+	<div class="tooltip-transport"></div>
+	<div class="tooltip-education"></div>
+	<div class="tooltip-others"></div>
 </div>
 <svg width=1000 height=575></svg>
 <script>
@@ -187,8 +202,8 @@ var path = d3.geoPath()
 
 var marginLine = {top: 10, right: 40, bottom: 10, left: 10};
 
-var widthLineNoMargin = 330,
-	heightLineNoMargin = 330;
+var widthLineNoMargin = 275,
+	heightLineNoMargin = 275;
 
 var widthLine = widthLineNoMargin - marginLine.left - marginLine.right,
 	heightLine = heightLineNoMargin - marginLine.top - marginLine.bottom;
@@ -207,30 +222,72 @@ var drawLine = d3.line()
 d3.queue()
 	.defer(d3.json, "provinces.json")
 	.defer(d3.csv, "data.csv", getData)
+	.defer(d3.csv, "food.csv", getData)
+	.defer(d3.csv, "cloth.csv", getData)
+	.defer(d3.csv, "residence.csv", getData)
+	.defer(d3.csv, "household.csv", getData)
+	.defer(d3.csv, "health.csv", getData)
+	.defer(d3.csv, "transport.csv", getData)
+	.defer(d3.csv, "education.csv", getData)
+	.defer(d3.csv, "others.csv", getData)
 	.await(drawMap);
 	
 function getData(d){
 	return d;
 }
 	
-function drawMap(error, border, data){
+function drawMap(error, border, data, food, cloth, residence, household, health, transport, education, others){
 
 	var yearArray = Object.keys(data[0]).slice(0,-1);
+	
+	var initialYear = d3.extent(yearArray)[1];
 
-	var dataByProvince = d3.map(data, function(d){ return d.Region;});
-									
-	function dataByYear(year){
-				return dataByProvince.values()
+	var dataByProvince = d3.map(data, function(d){ return d.Region;}),
+		foodByProvince = d3.map(food, function(d){ return d.Region;}),
+		clothByProvince = d3.map(cloth, function(d){ return d.Region;}),
+		residenceByProvince = d3.map(residence, function(d){ return d.Region;}),
+		householdByProvince = d3.map(household, function(d){ return d.Region;}),
+		healthProvince = d3.map(health, function(d){ return d.Region;}),
+		transportByProvince = d3.map(transport, function(d){ return d.Region;}),
+		educationByProvince = d3.map(education, function(d){ return d.Region;}),
+		othersByProvince = d3.map(others, function(d){ return d.Region;});
+	
+	function categoryByYear(year, category){
+		return category.values()
+						.map(function(d){
+								return {Region: d.Region, Values: +d[year]};
+							});
+	}
+
+	function selectedCategoryByProvince(year, category){
+		var categoryByYear = category.values()
 									.map(function(d){
 											return {Region: d.Region, Values: +d[year]};
 										});
+		return d3.map(categoryByYear, function(d){
+											return d.Region;
+										});
 	}
 
-	var initialYear = d3.extent(yearArray)[1];
+	var dataByYear = categoryByYear(initialYear, dataByProvince),
+		foodByYear = categoryByYear(initialYear, foodByProvince),
+		clothByYear = categoryByYear(initialYear, clothByProvince),
+		residenceByYear = categoryByYear(initialYear, residenceByProvince),
+		householdByYear = categoryByYear(initialYear, householdByProvince),
+		healthByYear = categoryByYear(initialYear, healthProvince),
+		transportByYear = categoryByYear(initialYear, transportByProvince),
+		educationByYear = categoryByYear(initialYear, educationByProvince),
+		othersByYear = categoryByYear(initialYear, othersByProvince);
 	
-	var selectedDataByProvince = d3.map(dataByYear(initialYear), function(d){
-																	return d.Region;
-																});
+	var selectedDataByProvince = selectedCategoryByProvince(initialYear, dataByProvince),
+		selectedFoodByProvince = selectedCategoryByProvince(initialYear, foodByProvince),
+		selectedClothByProvince = selectedCategoryByProvince(initialYear, clothByProvince),
+		selectedResidenceByProvince = selectedCategoryByProvince(initialYear, residenceByProvince),
+		selectedHouseholdByProvince = selectedCategoryByProvince(initialYear, householdByProvince),
+		selectedHealthByProvince = selectedCategoryByProvince(initialYear, healthProvince),
+		selectedTransportByProvince = selectedCategoryByProvince(initialYear, transportByProvince),
+		selectedEducationByProvince = selectedCategoryByProvince(initialYear, educationByProvince),
+		selectedOthersByProvince = selectedCategoryByProvince(initialYear, othersByProvince);
 															
 	var dataForLines = dataByProvince.keys().map(function(province){
 													return {
@@ -266,8 +323,8 @@ function drawMap(error, border, data){
 	yScale.domain([yMinValue, yMaxValue]);
 	colorScale.domain([yMinValue, yMaxValue]);															
 	
-//	var maxValue = d3.max(dataByYear(initialYear), function(d){ return d.Values;}),
-//		minValue = d3.min(dataByYear(initialYear), function(d){ return d.Values;});
+//	var maxValue = d3.max(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;}),
+//		minValue = d3.min(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;});
 	
 	g.append("g")
 		.attr("class", "map")
@@ -321,14 +378,32 @@ function drawMap(error, border, data){
 				d3.select(".tooltip")
 					.style("opacity", 0.8)
 					.style("left", xy[0] + 30 + "px")
-					.style("top", xy[1] + 30 + "px");
+					.style("top", xy[1] - 90 + "px")
+					.style("width", "150px")
+					.style("height", "150px");
 				d3.select(".tooltip-province")
 					.text(d.properties.NAME_1);
 
 				if (selectedDataByProvince.get(d.properties.NAME_1)) {
-					d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+					d3.select(".tooltip-value").text("Total: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+					d3.select(".tooltip-food").text("Food: " + numberRound(selectedFoodByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-cloth").text("Cloth: " + numberRound(selectedClothByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-residence").text("Residence: " + numberRound(selectedResidenceByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-household").text("Household: " + numberRound(selectedHouseholdByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-health").text("Health: " + numberRound(selectedHealthByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-transport").text("Transport: " + numberRound(selectedTransportByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-education").text("Education: " + numberRound(selectedEducationByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-others").text("Others: " + numberRound(selectedOthersByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
 				} else {
 					d3.select(".tooltip-value").text("No Data");
+					d3.select(".tooltip-food").text("No Data");
+					d3.select(".tooltip-cloth").text("No Data");
+					d3.select(".tooltip-residence").text("No Data");
+					d3.select(".tooltip-household").text("No Data");
+					d3.select(".tooltip-health").text("No Data");
+					d3.select(".tooltip-transport").text("No Data");
+					d3.select(".tooltip-education").text("No Data");
+					d3.select(".tooltip-others").text("No Data");
 				}
 				
 				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
@@ -349,13 +424,13 @@ function drawMap(error, border, data){
 												});
 				selectedProvince.style("stroke-width", "0.5px");		
 				
-				d3.select(".province-name")
-					.text("");
-				d3.select(".province-value")
-					.text("");
+				d3.select(".province-name").text("");
+				d3.select(".province-value").text("");					
 					
 				d3.select(".tooltip")
-					.style("opacity", 0);
+					.style("opacity", "0")
+					.style("width", "0")
+					.style("height", "0");
 
 				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
 				
@@ -426,7 +501,7 @@ function drawMap(error, border, data){
 		.attr("class", "legend-title")
 		.attr("x", width - legendBoxWidth * 5)
 		.attr("y", 9)
-		.text("Annual Private Consumption ");
+		.text("Annual Urban Consumption ");
 		
 	g.append("text")
 		.attr("class", "legend-title")
@@ -450,7 +525,7 @@ function drawMap(error, border, data){
 		.attr("class", "title")
 		.attr("x", 0)
 		.attr("y", 20)
-		.text("Annual Private Consumption Expenditure per Capita");
+		.text("Annual Urban Consumption Expenditure per Capita");
 		
 	g.append("text")
 		.attr("class", "province-name")
@@ -502,12 +577,18 @@ function drawMap(error, border, data){
 	}
 	
 	function changeYear(selectedYear){
-		var selectedDataByProvince = d3.map(dataByYear(selectedYear), function(d){
-																			return d.Region;
-																		});
+		var selectedDataByProvince = selectedCategoryByProvince(selectedYear, dataByProvince),
+			selectedFoodByProvince = selectedCategoryByProvince(selectedYear, foodByProvince),
+			selectedClothByProvince = selectedCategoryByProvince(selectedYear, clothByProvince),
+			selectedResidenceByProvince = selectedCategoryByProvince(selectedYear, residenceByProvince),
+			selectedHouseholdByProvince = selectedCategoryByProvince(selectedYear, householdByProvince),
+			selectedHealthByProvince = selectedCategoryByProvince(selectedYear, healthProvince),
+			selectedTransportByProvince = selectedCategoryByProvince(selectedYear, transportByProvince),
+			selectedEducationByProvince = selectedCategoryByProvince(selectedYear, educationByProvince),
+			selectedOthersByProvince = selectedCategoryByProvince(selectedYear, othersByProvince);
 		
-	//	var maxValue = d3.max(dataByYear(selectedYear), function(d){ return d.Values;}),
-	//		minValue = d3.min(dataByYear(selectedYear), function(d){ return d.Values;});
+	//	var maxValue = d3.max(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;}),
+	//		minValue = d3.min(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;});
 			
 
 	//	colorScale.domain([minValue, maxValue]);
@@ -551,14 +632,32 @@ function drawMap(error, border, data){
 					d3.select(".tooltip")
 						.style("opacity", 0.8)
 						.style("left", xy[0] + 30 + "px")
-						.style("top", xy[1] + 30 + "px");
+						.style("top", xy[1] + 90 + "px")
+						.style("width", "150px")
+						.style("height", "150px");
 					d3.select(".tooltip-province")
 						.text(d.properties.NAME_1);
 
 					if (selectedDataByProvince.get(d.properties.NAME_1)) {
-						d3.select(".tooltip-value").text("Value: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+						d3.select(".tooltip-value").text("Total: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+						d3.select(".tooltip-food").text("Food: " + numberRound(selectedFoodByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-cloth").text("Cloth: " + numberRound(selectedClothByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-residence").text("Residence: " + numberRound(selectedResidenceByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-household").text("Household: " + numberRound(selectedHouseholdByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-health").text("Health: " + numberRound(selectedHealthByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-transport").text("Transport: " + numberRound(selectedTransportByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-education").text("Education: " + numberRound(selectedEducationByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-others").text("Others: " + numberRound(selectedOthersByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
 					} else {
 						d3.select(".tooltip-value").text("No Data");
+						d3.select(".tooltip-food").text("No Data");
+						d3.select(".tooltip-cloth").text("No Data");
+						d3.select(".tooltip-residence").text("No Data");
+						d3.select(".tooltip-household").text("No Data");
+						d3.select(".tooltip-health").text("No Data");
+						d3.select(".tooltip-transport").text("No Data");
+						d3.select(".tooltip-education").text("No Data");
+						d3.select(".tooltip-others").text("No Data");
 					}
 					
 					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
@@ -579,13 +678,13 @@ function drawMap(error, border, data){
 													});
 					selectedProvince.style("stroke-width", "0.5px");		
 					
-					d3.select(".province-name")
-						.text("");
-					d3.select(".province-value")
-						.text("");
+					d3.select(".province-name").text("");
+					d3.select(".province-value").text("");					
 						
 					d3.select(".tooltip")
-						.style("opacity", 0);
+						.style("opacity", "0")
+						.style("width", "0")
+						.style("height", "0");
 
 					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
 					
