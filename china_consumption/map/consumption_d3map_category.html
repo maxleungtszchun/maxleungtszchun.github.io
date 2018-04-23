@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<meta charset="UTF-8">
+<meta name="author" content="Max Leung">
+<style>
+body {
+	margin: 0;
+}
+
+.border {
+	stroke: white;
+	stroke-width: 0.5px;
+}
+
+.legend-box {
+	stroke: white;
+	stroke-width: 1px;
+}
+
+.legend-title, .legend-label-max, .legend-label-min {
+	font-family: Arial;
+	font-size: 12px;
+	fill: black;
+}
+
+.legend-title {
+	font-weight: bold;
+}
+
+.title {
+	font-family: Arial;
+	font-size: 20px;
+	font-weight: bold;
+	fill: black;	
+}
+
+.province-name {
+	font-family: Arial;
+	font-size: 45px;
+	font-weight: bold;
+	fill: black;	
+}
+
+.province-value {
+	font-family: Arial;
+	font-size: 20px;
+	font-weight: bold;	
+	fill: black;	
+}
+
+.tooltip {
+	position: absolute;
+	background-color: white;
+	border: 2px solid #FF6F3C;
+	padding-left: 5px;
+	padding-top: 5px;
+	opacity: 0;
+}
+
+.tooltip-province,
+.tooltip-value,
+.tooltip-food,
+.tooltip-cloth,
+.tooltip-residence,
+.tooltip-household,
+.tooltip-health,
+.tooltip-transport,
+.tooltip-education,
+.tooltip-others {
+	font-family: Arial;
+	font-size: 12px;
+	fill: black;	
+}
+
+.tooltip-province {
+	padding-bottom: 2px;
+	font-size: 17px;
+	font-weight: bold;
+}
+
+.line {
+	fill: none;
+	stroke-width: 2px;
+	opacity: 0.5;
+}
+
+.x-axis, .y-axis {
+	font-family: Arial;
+	font-size: 6.5px;
+	stroke-width: 0;
+}
+
+#slider {
+	display: block;
+	-webkit-appearance: none;
+	width: 1000px;
+	height: 10px;
+	margin: 0;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	border-radius: 100%;
+	width: 20px;
+	height: 20px;
+	background: #FF6F3C;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider:active::-webkit-slider-thumb {
+	width: 30px;
+	height: 30px;
+	background: #FF6F3C;
+}
+
+#slider::-moz-range-track {
+	background: none;
+}
+
+#slider::-moz-range-thumb {
+	border-radius: 100%;
+	width: 20px;
+	height: 20px;
+	background: #FF6F3C;
+	border: none;	
+	cursor: pointer;
+}
+
+#slider:active::-moz-range-thumb {
+	width: 30px;
+	height: 30px;
+	background: #FF6F3C;
+}
+
+.slider-year {
+	font-family: Arial;
+	font-size: 45px;
+	font-weight: bold;
+	fill: black;
+}
+
+footer {
+	font-family: Arial;
+	font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+<div class="tooltip">
+	<div class="tooltip-province"></div>
+	<div class="tooltip-value"></div>
+	<div class="tooltip-food"></div>
+	<div class="tooltip-cloth"></div>
+	<div class="tooltip-residence"></div>
+	<div class="tooltip-household"></div>
+	<div class="tooltip-health"></div>
+	<div class="tooltip-transport"></div>
+	<div class="tooltip-education"></div>
+	<div class="tooltip-others"></div>
+</div>
+<svg width=1000 height=575></svg>
+<script>
+var margin = {top: 10, right: 10, bottom: 10, left: 10};
+
+var svg = d3.select("svg");
+
+var g = svg.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var width = +svg.attr("width") - margin.left - margin.right,
+	height = +svg.attr("height") - margin.top - margin.bottom;
+	
+var minColor = "#FFC93C",
+	maxColor = "#FF6F3C",
+	selectedColor = "#FF6F3C",
+	lineColor = "#FFC93C",
+	emptyColor = "#DFD3D3";
+	
+var valueUnit = " RMB";
+
+var colorScale = d3.scaleLinear()
+					.range([minColor, maxColor])
+					.interpolate(d3.interpolateHcl);	
+
+var numberRound = d3.format(",.0f");					
+	
+var projection = d3.geoMercator()
+					.center([103.8191, 36.56177])
+					.scale(700)
+					.translate([width / 2, height / 2 + 30]);
+
+var path = d3.geoPath()
+			.projection(projection);
+
+
+var marginLine = {top: 10, right: 40, bottom: 10, left: 10};
+
+var widthLineNoMargin = 275,
+	heightLineNoMargin = 275;
+
+var widthLine = widthLineNoMargin - marginLine.left - marginLine.right,
+	heightLine = heightLineNoMargin - marginLine.top - marginLine.bottom;
+
+var xScale = d3.scaleLinear()
+					.range([0, widthLine]);
+				
+var	yScale = d3.scaleLinear()
+					.range([heightLine, 0]);
+					
+var drawLine = d3.line()
+				.curve(d3.curveBasis)
+				.x(function(d){ return xScale(d.year);})
+				.y(function(d){ return yScale(d.value);});			
+
+d3.queue()
+	.defer(d3.json, "provinces.json")
+	.defer(d3.csv, "data.csv", getData)
+	.defer(d3.csv, "food.csv", getData)
+	.defer(d3.csv, "cloth.csv", getData)
+	.defer(d3.csv, "residence.csv", getData)
+	.defer(d3.csv, "household.csv", getData)
+	.defer(d3.csv, "health.csv", getData)
+	.defer(d3.csv, "transport.csv", getData)
+	.defer(d3.csv, "education.csv", getData)
+	.defer(d3.csv, "others.csv", getData)
+	.await(drawMap);
+	
+function getData(d){
+	return d;
+}
+	
+function drawMap(error, border, data, food, cloth, residence, household, health, transport, education, others){
+
+	var yearArray = Object.keys(data[0]).slice(0,-1);
+	
+	var initialYear = d3.extent(yearArray)[1];
+
+	var dataByProvince = d3.map(data, function(d){ return d.Region;}),
+		foodByProvince = d3.map(food, function(d){ return d.Region;}),
+		clothByProvince = d3.map(cloth, function(d){ return d.Region;}),
+		residenceByProvince = d3.map(residence, function(d){ return d.Region;}),
+		householdByProvince = d3.map(household, function(d){ return d.Region;}),
+		healthProvince = d3.map(health, function(d){ return d.Region;}),
+		transportByProvince = d3.map(transport, function(d){ return d.Region;}),
+		educationByProvince = d3.map(education, function(d){ return d.Region;}),
+		othersByProvince = d3.map(others, function(d){ return d.Region;});
+	
+	function categoryByYear(year, category){
+		return category.values()
+						.map(function(d){
+								return {Region: d.Region, Values: +d[year]};
+							});
+	}
+
+	function selectedCategoryByProvince(year, category){
+		var categoryByYear = category.values()
+									.map(function(d){
+											return {Region: d.Region, Values: +d[year]};
+										});
+		return d3.map(categoryByYear, function(d){
+											return d.Region;
+										});
+	}
+
+	var dataByYear = categoryByYear(initialYear, dataByProvince),
+		foodByYear = categoryByYear(initialYear, foodByProvince),
+		clothByYear = categoryByYear(initialYear, clothByProvince),
+		residenceByYear = categoryByYear(initialYear, residenceByProvince),
+		householdByYear = categoryByYear(initialYear, householdByProvince),
+		healthByYear = categoryByYear(initialYear, healthProvince),
+		transportByYear = categoryByYear(initialYear, transportByProvince),
+		educationByYear = categoryByYear(initialYear, educationByProvince),
+		othersByYear = categoryByYear(initialYear, othersByProvince);
+	
+	var selectedDataByProvince = selectedCategoryByProvince(initialYear, dataByProvince),
+		selectedFoodByProvince = selectedCategoryByProvince(initialYear, foodByProvince),
+		selectedClothByProvince = selectedCategoryByProvince(initialYear, clothByProvince),
+		selectedResidenceByProvince = selectedCategoryByProvince(initialYear, residenceByProvince),
+		selectedHouseholdByProvince = selectedCategoryByProvince(initialYear, householdByProvince),
+		selectedHealthByProvince = selectedCategoryByProvince(initialYear, healthProvince),
+		selectedTransportByProvince = selectedCategoryByProvince(initialYear, transportByProvince),
+		selectedEducationByProvince = selectedCategoryByProvince(initialYear, educationByProvince),
+		selectedOthersByProvince = selectedCategoryByProvince(initialYear, othersByProvince);
+															
+	var dataForLines = dataByProvince.keys().map(function(province){
+													return {
+														provinceName: province,
+														provinceValues: dataForLine(province)
+													};
+												});
+												
+	function dataForLine(province){
+		return yearArray.map(function(year){
+								return {
+									year: year,
+									value: +dataByProvince.get(province)[year]
+								};
+							});
+	}
+	
+	var yMaxValue = d3.max(data, function(province){
+										return d3.max(yearArray.map(function(year){
+																		return +province[year];
+																	})
+										);
+									});
+									
+	var yMinValue = d3.min(data, function(province){
+										return d3.min(yearArray.map(function(year){
+																		return +province[year];
+																	})
+										);
+									});		
+
+	xScale.domain(d3.extent(yearArray));
+	yScale.domain([yMinValue, yMaxValue]);
+	colorScale.domain([yMinValue, yMaxValue]);															
+	
+//	var maxValue = d3.max(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;}),
+//		minValue = d3.min(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;});
+	
+	g.append("g")
+		.attr("class", "map")
+		.selectAll(".border")
+		.data(border.features)
+		.enter()
+		.append("path")
+		.attr("class", function(d){ return d.properties.NAME_1 + " border";})
+		.attr("d", path)
+		.style("fill", function(d){
+							if (selectedDataByProvince.get(d.properties.NAME_1)) {
+								return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+							} else {
+								return emptyColor;
+							}
+						})
+		.on("mouseover", provinceMouseOver)
+		.on("mouseout", provinceMouseOut);
+	
+	var gLine = g.append("g")
+				.attr("transform", "translate(" + (width - widthLineNoMargin) + ", " + (height - heightLineNoMargin) + ")")
+				.append("g")
+				.attr("transform", "translate(" + marginLine.left + ", " + marginLine.top + ")")
+				.attr("class", "lines");
+
+	gLine.selectAll(".line")
+		.data(dataForLines)
+		.enter()
+		.append("path")
+		.attr("class", function(d){ return d.provinceName + " line";})
+		.attr("d", function(d){ return drawLine(d.provinceValues);})
+		.style("stroke", lineColor)
+		.on("mouseover", lineMouseOver)
+		.on("mouseout", lineMouseOut);
+		
+	function provinceMouseOver(d){
+				var selectedProvince = d3.select(this);
+				selectedProvince.style("fill", selectedColor);
+				selectedProvince.style("stroke-width", "4px");
+				
+				d3.select(".province-name")
+					.text(d.properties.NAME_1);
+
+				if (selectedDataByProvince.get(d.properties.NAME_1)) {
+					d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+				} else {
+					d3.select(".province-value").text("No Data");
+				}
+					
+				var xy = d3.mouse(this);
+				d3.select(".tooltip")
+					.style("opacity", 0.8)
+					.style("left", xy[0] + 30 + "px")
+					.style("top", xy[1] - 90 + "px")
+					.style("width", "150px")
+					.style("height", "150px");
+				d3.select(".tooltip-province")
+					.text(d.properties.NAME_1);
+
+				if (selectedDataByProvince.get(d.properties.NAME_1)) {
+					d3.select(".tooltip-value").text("Total: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+					d3.select(".tooltip-food").text("Food: " + numberRound(selectedFoodByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-cloth").text("Cloth: " + numberRound(selectedClothByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-residence").text("Residence: " + numberRound(selectedResidenceByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-household").text("Household: " + numberRound(selectedHouseholdByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-health").text("Health: " + numberRound(selectedHealthByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-transport").text("Transport: " + numberRound(selectedTransportByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-education").text("Education: " + numberRound(selectedEducationByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					d3.select(".tooltip-others").text("Others: " + numberRound(selectedOthersByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+				} else {
+					d3.select(".tooltip-value").text("No Data");
+					d3.select(".tooltip-food").text("No Data");
+					d3.select(".tooltip-cloth").text("No Data");
+					d3.select(".tooltip-residence").text("No Data");
+					d3.select(".tooltip-household").text("No Data");
+					d3.select(".tooltip-health").text("No Data");
+					d3.select(".tooltip-transport").text("No Data");
+					d3.select(".tooltip-education").text("No Data");
+					d3.select(".tooltip-others").text("No Data");
+				}
+				
+				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
+				
+				selectedLine.style("stroke", selectedColor);
+				selectedLine.style("stroke-width", "4px");
+				selectedLine.style("opacity", "1");
+	}
+	
+	function provinceMouseOut(d){
+				var selectedProvince = d3.select(this);
+				selectedProvince.style("fill", function(d){
+													if (selectedDataByProvince.get(d.properties.NAME_1)){
+														return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+													} else {
+														return emptyColor;
+													}
+												});
+				selectedProvince.style("stroke-width", "0.5px");		
+				
+				d3.select(".province-name").text("");
+				d3.select(".province-value").text("");					
+					
+				d3.select(".tooltip")
+					.style("opacity", "0")
+					.style("width", "0")
+					.style("height", "0");
+
+				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
+				
+				selectedLine.style("stroke", lineColor);
+				selectedLine.style("stroke-width", "2px");
+				selectedLine.style("opacity", "0.5");		
+	}		
+						
+	function lineMouseOver(d){
+				var selectedLine = d3.select(this);
+				selectedLine.style("stroke", selectedColor);
+				selectedLine.style("stroke-width", "4px");
+				selectedLine.style("opacity", "1");
+											
+				d3.select(".province-name")
+					.text(d.provinceName);
+			//	d3.select(".province-value")
+			//		.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
+				
+				var selectedProvince = d3.select("." + d.provinceName + ".border");
+				selectedProvince.style("fill", selectedColor);
+				selectedProvince.style("stroke-width", "4px");	
+	}
+	
+	function lineMouseOut(d){
+				var selectedLine = d3.select(this);
+				selectedLine.style("stroke", lineColor);
+				selectedLine.style("stroke-width", "2px");
+				selectedLine.style("opacity", "0.5");
+				
+				d3.select(".province-name")
+					.text("");
+			//	d3.select(".province-value")
+			//		.text("");							
+				
+				var selectedProvince = d3.select("." + d.provinceName + ".border");
+				selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
+				selectedProvince.style("stroke-width", "0.5px");		
+	}
+	
+	gLine.append("g")
+			.attr("class", "x-axis")
+			.attr("transform", "translate(0, " + heightLine + ")")
+			.call(d3.axisBottom(xScale).tickFormat(d3.format(".0f")));
+			
+	gLine.append("g")
+			.attr("class", "y-axis")
+			.attr("transform", "translate(" + widthLine + ", 0)")
+			.call(d3.axisRight(yScale));
+			
+
+	var legendBoxWidth = 35;
+	
+	g.append("g")
+		.attr("class", "legend-boxes")
+		.selectAll(".legend-box")
+		.data([yMaxValue, (yMaxValue - yMinValue)/2, (yMaxValue - yMinValue)/3, (yMaxValue - yMinValue)/4, yMinValue])
+		.enter()
+		.append("rect")
+		.attr("class", "legend-box")
+		.attr("width", legendBoxWidth)
+		.attr("height", 15)
+		.attr("x", function(d, i){ return width - legendBoxWidth - legendBoxWidth * i;})
+		.attr("y", 20)
+		.style("fill", function(d){ return colorScale(d)});
+		
+	g.append("text")
+		.attr("class", "legend-title")
+		.attr("x", width - legendBoxWidth * 5)
+		.attr("y", 9)
+		.text("Annual Urban Consumption ");
+		
+	g.append("text")
+		.attr("class", "legend-title")
+		.attr("x", width - legendBoxWidth * 5)
+		.attr("y", 19)
+		.text("Expenditure per Capita (RMB)");		
+	
+	g.append("text")
+		.attr("class", "legend-label-min")
+		.attr("x", width - legendBoxWidth * 5)
+		.attr("y", 20 + 15 + 12)
+		.text(d3.format(",.0f")(yMinValue));
+		
+	g.append("text")
+		.attr("class", "legend-label-max")
+		.attr("x", width - legendBoxWidth)
+		.attr("y", 20 + 15 + 12)
+		.text(d3.format(",.0f")(yMaxValue));
+
+	g.append("text")
+		.attr("class", "title")
+		.attr("x", 0)
+		.attr("y", 20)
+		.text("Annual Urban Consumption Expenditure per Capita");
+		
+	g.append("text")
+		.attr("class", "province-name")
+		.attr("x", 0)
+		.attr("y", 20 + 45);
+		
+	g.append("text")
+		.attr("class", "province-value")
+		.attr("x", 0)
+		.attr("y", 75 + 20);
+
+	g.append("text")
+		.attr("class", "slider-year")
+		.attr("x", 0)
+		.attr("y", height);
+		
+	d3.select("body")
+		.append("input")
+		.attr("id", "slider")
+		.attr("type", "range")
+		.attr("min", d3.extent(yearArray)[0])
+		.attr("max", d3.extent(yearArray)[1])
+		.attr("step", 1)
+		.attr("value", d3.extent(yearArray)[1])
+		.style("background", lineColor);
+	//	.attr("list", "slider-ticks");
+	
+	d3.select("body")
+		.append("footer")
+		.append("em")
+		.text("Source: National Bureau of Statistics of China; Author of this d3 graph: Leung Tsz Chun, Max")
+	/*
+	d3.select("body")
+		.append("datalist")
+		.attr("id", "slider-ticks")
+		.selectAll(".slider-tick")
+		.data(yearArray)
+		.enter()
+		.append("option")
+		.attr("value", function(d){ return d;})
+		.attr("label", function(d){ return d;});
+	*/
+	
+	d3.select(".slider-year").text(initialYear);		
+	
+	document.getElementById("slider").oninput = function(){
+		var selectedYear = this.value;
+		changeYear(selectedYear);
+	}
+	
+	function changeYear(selectedYear){
+		var selectedDataByProvince = selectedCategoryByProvince(selectedYear, dataByProvince),
+			selectedFoodByProvince = selectedCategoryByProvince(selectedYear, foodByProvince),
+			selectedClothByProvince = selectedCategoryByProvince(selectedYear, clothByProvince),
+			selectedResidenceByProvince = selectedCategoryByProvince(selectedYear, residenceByProvince),
+			selectedHouseholdByProvince = selectedCategoryByProvince(selectedYear, householdByProvince),
+			selectedHealthByProvince = selectedCategoryByProvince(selectedYear, healthProvince),
+			selectedTransportByProvince = selectedCategoryByProvince(selectedYear, transportByProvince),
+			selectedEducationByProvince = selectedCategoryByProvince(selectedYear, educationByProvince),
+			selectedOthersByProvince = selectedCategoryByProvince(selectedYear, othersByProvince);
+		
+	//	var maxValue = d3.max(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;}),
+	//		minValue = d3.min(categoryByYear(initialYear, dataByProvince), function(d){ return d.Values;});
+			
+
+	//	colorScale.domain([minValue, maxValue]);
+
+		d3.selectAll(".border")
+			.style("fill", function(d){
+								if (selectedDataByProvince.get(d.properties.NAME_1)) {
+									return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+								} else {
+									return emptyColor;
+								}
+							})
+			.on("mouseover", provinceMouseOver)
+			.on("mouseout", provinceMouseOut);	
+						
+	//	d3.select(".legend-label-min")
+	//		.text(d3.format(",.0f")(minValue));
+			
+	//	d3.select(".legend-label-max")
+	//		.text(d3.format(",.0f")(maxValue));		
+
+		d3.selectAll(".line")
+			.on("mouseover", lineMouseOver)
+			.on("mouseout", lineMouseOut);
+			
+		function provinceMouseOver(d){
+					var selectedProvince = d3.select(this);
+					selectedProvince.style("fill", selectedColor);
+					selectedProvince.style("stroke-width", "4px");
+					
+					d3.select(".province-name")
+						.text(d.properties.NAME_1);
+
+					if (selectedDataByProvince.get(d.properties.NAME_1)) {
+						d3.select(".province-value").text(numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+					} else {
+						d3.select(".province-value").text("No Data");
+					}
+						
+					var xy = d3.mouse(this);
+					d3.select(".tooltip")
+						.style("opacity", 0.8)
+						.style("left", xy[0] + 30 + "px")
+						.style("top", xy[1] + 90 + "px")
+						.style("width", "150px")
+						.style("height", "150px");
+					d3.select(".tooltip-province")
+						.text(d.properties.NAME_1);
+
+					if (selectedDataByProvince.get(d.properties.NAME_1)) {
+						d3.select(".tooltip-value").text("Total: " + numberRound(selectedDataByProvince.get(d.properties.NAME_1).Values) + valueUnit);
+						d3.select(".tooltip-food").text("Food: " + numberRound(selectedFoodByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-cloth").text("Cloth: " + numberRound(selectedClothByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-residence").text("Residence: " + numberRound(selectedResidenceByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-household").text("Household: " + numberRound(selectedHouseholdByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-health").text("Health: " + numberRound(selectedHealthByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-transport").text("Transport: " + numberRound(selectedTransportByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-education").text("Education: " + numberRound(selectedEducationByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+						d3.select(".tooltip-others").text("Others: " + numberRound(selectedOthersByProvince.get(d.properties.NAME_1).Values / selectedDataByProvince.get(d.properties.NAME_1).Values * 100) + "%");
+					} else {
+						d3.select(".tooltip-value").text("No Data");
+						d3.select(".tooltip-food").text("No Data");
+						d3.select(".tooltip-cloth").text("No Data");
+						d3.select(".tooltip-residence").text("No Data");
+						d3.select(".tooltip-household").text("No Data");
+						d3.select(".tooltip-health").text("No Data");
+						d3.select(".tooltip-transport").text("No Data");
+						d3.select(".tooltip-education").text("No Data");
+						d3.select(".tooltip-others").text("No Data");
+					}
+					
+					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line");
+					
+					selectedLine.style("stroke", selectedColor);
+					selectedLine.style("stroke-width", "4px");
+					selectedLine.style("opacity", "1");
+		}
+		
+		function provinceMouseOut(d){
+					var selectedProvince = d3.select(this);
+					selectedProvince.style("fill", function(d){
+														if (selectedDataByProvince.get(d.properties.NAME_1)){
+															return colorScale(selectedDataByProvince.get(d.properties.NAME_1).Values);
+														} else {
+															return emptyColor;
+														}
+													});
+					selectedProvince.style("stroke-width", "0.5px");		
+					
+					d3.select(".province-name").text("");
+					d3.select(".province-value").text("");					
+						
+					d3.select(".tooltip")
+						.style("opacity", "0")
+						.style("width", "0")
+						.style("height", "0");
+
+					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
+					
+					selectedLine.style("stroke", lineColor);
+					selectedLine.style("stroke-width", "2px");
+					selectedLine.style("opacity", "0.5");		
+		}		
+							
+		function lineMouseOver(d){
+					var selectedLine = d3.select(this);
+					selectedLine.style("stroke", selectedColor);
+					selectedLine.style("stroke-width", "4px");
+					selectedLine.style("opacity", "1");
+												
+					d3.select(".province-name")
+						.text(d.provinceName);
+				//	d3.select(".province-value")
+				//		.text(numberRound(selectedDataByProvince.get(d.provinceName).Values) + valueUnit);							
+					
+					var selectedProvince = d3.select("." + d.provinceName + ".border");
+					selectedProvince.style("fill", selectedColor);
+					selectedProvince.style("stroke-width", "4px");	
+		}
+		
+		function lineMouseOut(d){
+					var selectedLine = d3.select(this);
+					selectedLine.style("stroke", lineColor);
+					selectedLine.style("stroke-width", "2px");
+					selectedLine.style("opacity", "0.5");
+					
+					d3.select(".province-name")
+						.text("");
+				//	d3.select(".province-value")
+				//		.text("");							
+					
+					var selectedProvince = d3.select("." + d.provinceName + ".border");
+					selectedProvince.style("fill", colorScale(selectedDataByProvince.get(d.provinceName).Values));
+					selectedProvince.style("stroke-width", "0.5px");		
+		}
+		
+		d3.select(".slider-year").text(selectedYear);
+	}
+}
+</script>
+</body>
+</html>
+
