@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>Global Flood</title>
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
+<style>
+body, a {
+	margin: 0;
+	font-family: Arial;
+	font-size: 12px;
+	color: #8A1253;
+}
+
+#mapDiv {
+//	position: absolute;
+//	top: 0;
+//	bottom: 0;
+	width: 100%;
+	height: 100vh;
+}
+
+#slider-parent {
+	position: absolute;
+	left: 30px;
+	bottom: 30px;
+	width: 250px;
+	height: 50px;
+	background: transparent;
+}
+
+#slider {
+	-webkit-appearance: none;
+	margin: 0;
+	width: 250px;
+	height: 5px;
+	outline: none;	
+	cursor: pointer;
+	background: white;
+}
+
+#slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	border-radius: 100%;
+	width: 20px;
+	height: 20px;
+	background: #8A1253;
+	outline: none;	
+	cursor: pointer;
+}
+
+#slider:active::-webkit-slider-thumb {
+	width: 30px;
+	height: 30px;
+	background: #8A1253;
+}
+
+#slider::-moz-range-track {
+	background: none;
+}
+
+#slider::-moz-range-thumb {
+	border-radius: 100%;
+	width: 20px;
+	height: 20px;
+	background: #8A1253;
+	border: none;	
+	cursor: pointer;
+}
+
+#slider:active::-moz-range-thumb {
+	width: 30px;
+	height: 30px;
+	background: #8A1253;
+}
+
+button {
+	font-family: Arial;
+	font-size: 20px;
+	font-weight: bold;
+	background: #8A1253;
+	color: white;
+	border: 0;
+	cursor: pointer;
+}
+
+button:hover {
+	color: #8A1253;
+	background: white;	
+}
+
+#year {
+	position: absolute;
+	left: 30px;
+	top: 30px;
+	width: 250px;
+	height: 100px;
+	background: transparent;
+	font-size: 100px;
+	font-weight: bold;
+}
+
+#source {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 530px;
+	height: 45px;	
+	background: transparent;
+	font-weight: bold;
+}
+
+
+</style>
+</head>
+<body>
+
+<div id="mapDiv"></div>
+<div id="year"></div>
+<div id="slider-parent">
+	<button id="start">Start</button>
+	<button id="stop">Stop</button>
+	<input type="range" min="1985" max="2018" value="2018" step="1" id="slider">
+</div>
+<div id="source">Note: Background color represents population density. Dark orange imply higher density.<br>
+Source: G.R.Brakenridge, <a href="https://floodobservatory.colorado.edu/Archives/index.html" target="_blank">"Global Active Archive of Large Flood Events"</a>, Dartmouth Flood Observatory, University of Colorado; NASA Earth Observations (NEO)</div>
+
+
+</div>
+
+<script>
+d3.queue()
+	.defer(d3.csv, "global_flood_data.csv", getData)
+	.await(drawMap);
+	
+function getData(d){
+	d.Area = +d.Area;
+	d.Year = +d.Year;
+	return d;
+}
+
+function drawMap(error, csv){
+
+	var field = {
+		latfield: "lat",
+		lonfield: "long",
+		delimiter: ","
+	};
+	
+	var maxValue = d3.max(csv, function(d){
+									return d.Area;
+								}),
+		minValue = d3.min(csv, function(d){
+									return d.Area;
+								});
+	
+	csv2geojson.csv2geojson(csv, field, function(error, json){
+	
+		console.log(json);
+	
+		mapboxgl.accessToken = "pk.eyJ1IjoibWF4bGV1bmciLCJhIjoiY2o0dzlyMzJ1MTU0YjJxazBoMjkwZjhtbCJ9.jg1qsvjoVqrMS9uwSpO9ww";
+		var map = new mapboxgl.Map({
+			container: "mapDiv",
+			style: "mapbox://styles/maxleung/cjgddpoa800082stjcx7i2n6r",
+			center: [0, 20],
+			zoom: 1.4,
+			dragRotate: false,
+			attributionControl: false
+		});		
+
+		map.on("load", function(){
+		
+			map.addSource("flood", {
+				type: "geojson",
+				data: json
+			});
+			
+			map.addLayer({
+				id: "flood-bubbles",
+				type: "circle",
+				source: "flood",
+				paint: {
+					"circle-color": [
+						"interpolate",
+						["linear"],
+						["get", "Area"],
+						minValue, "#8A1253",
+						maxValue, "#8A1253"
+					],
+					"circle-opacity": 0.75,
+					"circle-radius": [
+						"interpolate",
+						["linear"],
+						["get", "Area"],
+						minValue, 8,
+						maxValue, 30
+					]
+				}
+			});
+			
+			changeYear(2018);
+			document.getElementById("year").innerHTML = 2018;
+			
+			//DOM
+			document.getElementById("slider").oninput = slide;
+			document.getElementById("start").onclick = start;
+			document.getElementById("stop").onclick = stop;
+			
+			var	i = 0;
+			var loop;
+			
+			function slide(){
+				var selectedYear = +this.value;
+				changeYear(selectedYear);
+				document.getElementById("year").innerHTML = selectedYear;			
+			}
+			
+			function start(){
+				stop();
+				loop = setInterval(function(){
+										if (1984 + i <= 2018) {
+											i += 1;
+											changeYear(1984 + i)
+											document.getElementById("year").innerHTML = 1984 + i;
+											document.getElementById("slider").value = 1984 + i;
+										} else {
+											i = 1;
+											changeYear(1984 + i)
+											document.getElementById("year").innerHTML = 1984 + i;
+											document.getElementById("slider").value = 1984 + i;											
+										}
+									}, 200);
+			}
+			
+			function stop(){
+				clearInterval(loop);
+			}			
+			
+			function changeYear(year){
+				map.setFilter("flood-bubbles", ["==", "Year", year]);
+			}			
+
+		});	
+		
+		var tooltip = new mapboxgl.Popup({
+			closeButton: false,
+			closeOnClick: false
+		});
+
+		map.on("mouseenter", "flood-bubbles", function(e){
+		
+			map.getCanvas().style.cursor = "pointer";
+
+			var coordinates = e.features[0].geometry.coordinates.slice(),
+				regionValue = e.features[0].properties.Country,
+				yearValue = e.features[0].properties.Year,
+				areaValue = e.features[0].properties.Area,
+				deadValue = e.features[0].properties.Dead,
+				severityValue = e.features[0].properties.Severity;
+				
+			tooltip.setLngLat(coordinates)
+					.setHTML("<b>Region: " + regionValue + "<br>" +
+								"Year: " + yearValue + "<br>" +
+								"Area Affected: " + Math.round(areaValue) + " sq km<br>" +
+								"Severity: " + severityValue + " / 2</b>")
+					.addTo(map);
+		});
+
+		map.on("mouseleave", "flood-bubbles", function() {
+			map.getCanvas().style.cursor = "";
+			tooltip.remove();
+		});		
+	
+	});
+	
+}
+</script>
+
+</body>
+</html>
