@@ -183,21 +183,16 @@ function drawMap(error, csv){
 				type: "circle",
 				source: "flood",
 				paint: {
-					"circle-color": [
-						"interpolate",
-						["linear"],
-						["get", "Area"],
-						minValue, "#8A1253",
-						maxValue, "#8A1253"
-					],
+					"circle-color": "#8A1253",
 					"circle-opacity": 0.75,
-					"circle-radius": [
-						"interpolate",
-						["linear"],
-						["get", "Area"],
-						minValue, 8,
-						maxValue, 30
-					]
+					"circle-radius": {
+						property: "Area",
+						type: 'exponential',
+						stops: [
+						  [minValue, 8],
+						  [maxValue, 40]
+						]
+					}
 				}
 			});
 			
