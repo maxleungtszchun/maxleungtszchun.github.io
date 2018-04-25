@@ -8,7 +8,7 @@
 <script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
 <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
 <style>
-body, a {
+body {
 	margin: 0;
 	font-family: Arial;
 	font-size: 12px;
@@ -109,9 +109,10 @@ button:hover {
 	bottom: 0;
 	width: 530px;
 	height: 42px;	
-	background: white;
-	font-weight: bold;
+	background: #8A1253;
 	opacity: 0.5;
+	color: white;
+	font-weight: bold;	
 }
 
 #indicators {
@@ -138,8 +139,8 @@ button:hover {
 	<button id="stop">Stop</button>
 	<input type="range" min="1985" max="2018" value="2018" step="1" id="slider">
 </div>
-<div id="source">Note: Background color represents population density. Dark orange imply higher density.<br>
-Source: G.R.Brakenridge, <a href="https://floodobservatory.colorado.edu/Archives/index.html" target="_blank">"Global Active Archive of Large Flood Events"</a>, Dartmouth Flood Observatory, University of Colorado; NASA Earth Observations (NEO)</div>
+<div id="source">Note: Background color represents population density. Dark orange imply higher density.
+Source: G.R.Brakenridge, <a href="https://floodobservatory.colorado.edu/Archives/index.html" target="_blank" style="color: white;">"Global Active Archive of Large Flood Events"</a>, Dartmouth Flood Observatory, University of Colorado; NASA Earth Observations (NEO)</div>
 
 
 </div>
