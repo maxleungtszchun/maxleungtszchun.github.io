@@ -95,7 +95,7 @@ button:hover {
 #year {
 	position: absolute;
 	left: 30px;
-	top: 30px;
+	top: 15px;
 	width: 250px;
 	height: 100px;
 	background: transparent;
@@ -108,9 +108,17 @@ button:hover {
 	right: 0;
 	bottom: 0;
 	width: 530px;
-	height: 45px;	
-	background: transparent;
+	height: 42px;	
+	background: white;
 	font-weight: bold;
+	opacity: 0.5;
+}
+
+#indicators {
+	position: absolute;
+	right: 30px;
+	top: 15px;
+	background: transparent;
 }
 
 
@@ -120,6 +128,11 @@ button:hover {
 
 <div id="mapDiv"></div>
 <div id="year"></div>
+<div id="indicators">
+	<button id="area" style="margin-bottom: 3px;">Area Affected</button><br>
+	<button id="severity" style="margin-bottom: 3px;">Severity</button><br>
+	<button id="dead" style="margin-bottom: 3px;">Death Toll</button>
+</div>
 <div id="slider-parent">
 	<button id="start">Start</button>
 	<button id="stop">Stop</button>
@@ -138,6 +151,8 @@ d3.queue()
 	
 function getData(d){
 	d.Area = +d.Area;
+	d.Severity = +d.Severity;
+	d.Dead= +d.Dead;
 	d.Year = +d.Year;
 	return d;
 }
@@ -150,16 +165,9 @@ function drawMap(error, csv){
 		delimiter: ","
 	};
 	
-	var maxValue = d3.max(csv, function(d){
-									return d.Area;
-								}),
-		minValue = d3.min(csv, function(d){
-									return d.Area;
-								});
-	
 	csv2geojson.csv2geojson(csv, field, function(error, json){
 	
-		console.log(json);
+		console.log(json);	
 	
 		mapboxgl.accessToken = "pk.eyJ1IjoibWF4bGV1bmciLCJhIjoiY2o0dzlyMzJ1MTU0YjJxazBoMjkwZjhtbCJ9.jg1qsvjoVqrMS9uwSpO9ww";
 		var map = new mapboxgl.Map({
@@ -178,6 +186,13 @@ function drawMap(error, csv){
 				data: json
 			});
 			
+			var maxValue = d3.max(csv, function(d){
+											return d.Severity;
+										}),
+				minValue = d3.min(csv, function(d){
+											return d.Severity;
+										});		
+			
 			map.addLayer({
 				id: "flood-bubbles",
 				type: "circle",
@@ -186,16 +201,16 @@ function drawMap(error, csv){
 					"circle-color": "#8A1253",
 					"circle-opacity": 0.75,
 					"circle-radius": {
-						property: "Area",
-						type: 'exponential',
+						property: "Severity",
+						type: "exponential",
 						stops: [
 						  [minValue, 8],
-						  [maxValue, 40]
+						  [maxValue, 30]
 						]
 					}
 				}
 			});
-			
+
 			changeYear(2018);
 			document.getElementById("year").innerHTML = 2018;
 			
@@ -236,6 +251,27 @@ function drawMap(error, csv){
 			
 			function changeYear(year){
 				map.setFilter("flood-bubbles", ["==", "Year", year]);
+			}
+			
+			document.getElementById("area").onclick = function(){ changeIndicator("Area"); }
+			document.getElementById("severity").onclick = function(){ changeIndicator("Severity"); }
+			document.getElementById("dead").onclick = function(){ changeIndicator("Dead"); }			
+			
+			function changeIndicator(indicator){
+				var maxValue = d3.max(csv, function(d){
+												return d[indicator];
+											}),
+					minValue = d3.min(csv, function(d){
+												return d[indicator];
+											});
+				map.setPaintProperty("flood-bubbles", "circle-radius", {
+						property: indicator,
+						type: "exponential",
+						stops: [
+						  [minValue, 8],
+						  [maxValue, 30]
+						]
+				});
 			}			
 
 		});	
@@ -252,15 +288,18 @@ function drawMap(error, csv){
 			var coordinates = e.features[0].geometry.coordinates.slice(),
 				regionValue = e.features[0].properties.Country,
 				yearValue = e.features[0].properties.Year,
+				causeValue = e.features[0].properties.MainCause,
 				areaValue = e.features[0].properties.Area,
-				deadValue = e.features[0].properties.Dead,
-				severityValue = e.features[0].properties.Severity;
+				severityValue = e.features[0].properties.Severity,
+				deadValue = e.features[0].properties.Dead;
 				
 			tooltip.setLngLat(coordinates)
 					.setHTML("<b>Region: " + regionValue + "<br>" +
 								"Year: " + yearValue + "<br>" +
+								"Main Cause: " + causeValue + "<br>" +
 								"Area Affected: " + Math.round(areaValue) + " sq km<br>" +
-								"Severity: " + severityValue + " / 2</b>")
+								"Severity: " + severityValue + " over 2<br>" +
+								"Death Toll: " + deadValue + " people<b>")
 					.addTo(map);
 		});
 
