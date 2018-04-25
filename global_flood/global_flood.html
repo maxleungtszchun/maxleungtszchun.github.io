@@ -175,7 +175,7 @@ function drawMap(error, csv){
 			container: "mapDiv",
 			style: "mapbox://styles/maxleung/cjgddpoa800082stjcx7i2n6r",
 			center: [0, 20],
-			zoom: 1,
+			zoom: 1.4,
 			dragRotate: false,
 			attributionControl: false
 		});		
@@ -188,10 +188,10 @@ function drawMap(error, csv){
 			});
 			
 			var maxValue = d3.max(csv, function(d){
-											return d.Severity;
+											return d.Area;
 										}),
 				minValue = d3.min(csv, function(d){
-											return d.Severity;
+											return d.Area;
 										});		
 			
 			map.addLayer({
@@ -202,7 +202,7 @@ function drawMap(error, csv){
 					"circle-color": "#8A1253",
 					"circle-opacity": 0.75,
 					"circle-radius": {
-						property: "Severity",
+						property: "Area",
 						type: "exponential",
 						stops: [
 						  [minValue, 8],
