@@ -17,7 +17,8 @@ iframe {
   height: 100vh;
   background: black;
   background-image: url("https://maxleungtszchun.github.io/vegetation_cover/gif/result.gif");
-  background-size: 100% 720px;
+  background-position: top left;
+  background-size: cover;
   background-repeat: no-repeat;
   padding-top: 0;
 }
