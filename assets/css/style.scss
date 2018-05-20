@@ -5,7 +5,6 @@
 
 body {
   font-family: Arial;
-  font-size: 12px;
 }
 
 iframe {
@@ -34,21 +33,12 @@ iframe {
   font-weight: bold;
 }
 
-.author-name {
-  position: absolute;
-  top: 60%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  font-weight: bold;
-}
-
 .project-tagline {
   position: absolute;
   bottom: 0;
   left: 0;
   text-align: left;
-//  font-size: 12px;
+  font-size: 12px;
   opacity: 1;
   margin: 0 0 0 0;
 }
@@ -66,12 +56,12 @@ iframe {
 }
 
 .main-content p {
-//  font-size: 12px;
+  font-size: 12px;
 }
 
 .site-footer-credits {
   color: black;
-//  font-size: 12px;
+  font-size: 12px;
 }
 
 hr {
