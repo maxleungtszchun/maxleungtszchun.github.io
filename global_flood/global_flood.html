@@ -130,13 +130,13 @@ button:hover {
 <div id="mapDiv"></div>
 <div id="year"></div>
 <div id="indicators">
-	<button id="area" style="margin-bottom: 3px;">Area Affected</button><br>
-	<button id="severity" style="margin-bottom: 3px;">Severity</button><br>
-	<button id="dead" style="margin-bottom: 3px;">Death Toll</button>
+	<button id="area" class="indicatorButton" style="margin-bottom: 3px;">Area Affected</button><br>
+	<button id="severity" class="indicatorButton" style="margin-bottom: 3px;">Severity</button><br>
+	<button id="dead" class="indicatorButton" style="margin-bottom: 3px;">Death Toll</button>
 </div>
 <div id="slider-parent">
-	<button id="start">Start</button>
-	<button id="stop">Stop</button>
+	<button id="start" class="sliderButton">Start</button>
+	<button id="stop" class="sliderButton">Stop</button>
 	<input type="range" min="1985" max="2018" value="2018" step="1" id="slider">
 </div>
 <div id="source">Note: Background color represents population density. Dark orange imply higher density.
@@ -175,7 +175,7 @@ function drawMap(error, csv){
 			container: "mapDiv",
 			style: "mapbox://styles/maxleung/cjgddpoa800082stjcx7i2n6r",
 			center: [0, 20],
-			zoom: 1.1,
+			zoom: 1.4,
 			dragRotate: false,
 			attributionControl: false
 		});		
@@ -214,6 +214,8 @@ function drawMap(error, csv){
 
 			changeYear(2018);
 			document.getElementById("year").innerHTML = 2018;
+			document.getElementById("area").style.backgroundColor = "white";
+			document.getElementById("area").style.color = "#8A1253";
 			
 			//DOM
 			document.getElementById("slider").oninput = slide;
@@ -244,10 +246,12 @@ function drawMap(error, csv){
 											document.getElementById("slider").value = 1984 + i;											
 										}
 									}, 200);
+				buttonColor("slider-parent", ".sliderButton", "start");
 			}
 			
 			function stop(){
 				clearInterval(loop);
+				buttonColor("slider-parent", ".sliderButton", "stop");
 			}			
 			
 			function changeYear(year){
@@ -273,7 +277,20 @@ function drawMap(error, csv){
 						  [maxValue, 30]
 						]
 				});
-			}			
+				buttonColor("indicators", ".indicatorButton", indicator.toLowerCase());
+			}
+
+			function buttonColor(parentID, childClass, childID){
+				var allButtons = document.getElementById(parentID).querySelectorAll(childClass);
+				for (var i = 0; i < allButtons.length; i++) {
+					allButtons[i].style.backgroundColor = "#8A1253";
+					allButtons[i].style.color = "white";
+				}
+
+				var selectedButton = document.getElementById(childID);
+				selectedButton.style.backgroundColor = "white";
+				selectedButton.style.color = "#8A1253";					
+			}
 
 		});	
 		
