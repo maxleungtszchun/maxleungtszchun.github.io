@@ -113,7 +113,7 @@ Highcharts.chart("chart", {
 				color: "white"
 			},
 			formatter: function(){
-							return Highcharts.numberFormat(this.value * 100, 0, ".", ",") + "%";
+							return Highcharts.numberFormat(Math.round(this.value * 100), 0, ".", ",") + "%";
 						}
 		},
 		opposite: true,			
