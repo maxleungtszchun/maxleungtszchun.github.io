@@ -110,12 +110,13 @@ Highcharts.chart("chart", {
 			y: 0,
 			reserveSpace: false,
 			style: {
-				color: "#FFC93C"
+				color: "white"
 			},
 			formatter: function(){
 							return Highcharts.numberFormat(Math.round(this.value * 100), 0, ".", ",") + "%";
 						}
 		},
+		tickInterval: 0.02,
 		opposite: true,			
 		gridLineColor: "white",
 		gridLineWidth: 0.5
