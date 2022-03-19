@@ -384,7 +384,7 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 				}
 					
 				d3.select(".tooltip")
-					.style("opacity", 0.8)
+					.style("opacity", "0.8")
 					.style("left", d3.mouse(this)[0] + 50 + "px")
 					.style("top", d3.mouse(this)[1] - 90 + "px")
 					.style("width", "170px")
@@ -436,7 +436,7 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 				}
 					
 				d3.select(".tooltip")
-					.style("opacity", 0.8)
+					.style("opacity", "0.8")
 					.style("left", d3.mouse(this)[0] + 50 + "px")
 					.style("top", d3.mouse(this)[1] - 90 + "px")
 					.style("width", "170px")
@@ -488,7 +488,7 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 				d3.select(".province-value").text("");
 					
 				d3.select(".tooltip")
-					.style("opacity", 0)
+					.style("opacity", "0")
 					.style("width", "0px")
 					.style("height", "0px");
 
@@ -662,7 +662,7 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 					}
 						
 					d3.select(".tooltip")
-						.style("opacity", 0.8)
+						.style("opacity", "0.8")
 						.style("left", d3.mouse(this)[0] + 50 + "px")
 						.style("top", d3.mouse(this)[1] - 90 + "px")
 						.style("width", "170px")
@@ -714,7 +714,7 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 				}
 					
 				d3.select(".tooltip")
-					.style("opacity", 0.8)
+					.style("opacity", "0.8")
 					.style("left", d3.mouse(this)[0] + 50 + "px")
 					.style("top", d3.mouse(this)[1] - 90 + "px")
 					.style("width", "170px")
@@ -767,8 +767,8 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 						
 					d3.select(".tooltip")
 						.style("opacity", "0")
-						.style("width", "0")
-						.style("height", "0");
+						.style("width", "0px")
+						.style("height", "0px");
 
 					var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
 					
