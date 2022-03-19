@@ -488,9 +488,9 @@ function drawMap(error, border, data, food, cloth, residence, household, health,
 				d3.select(".province-value").text("");
 					
 				d3.select(".tooltip")
-					.style("opacity", "0")
-					.style("width", "0")
-					.style("height", "0");
+					.style("opacity", 0)
+					.style("width", "0px")
+					.style("height", "0px");
 
 				var selectedLine = d3.select("." + d.properties.NAME_1 + ".line")
 				
