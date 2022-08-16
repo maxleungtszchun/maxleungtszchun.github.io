@@ -94,7 +94,8 @@ Highcharts.chart("chart", {
 	yAxis: {
 		title: {
 			text: "% of Total Retail Sales from 2010 to 2017",
-			align: "high",
+			//align: "high",
+			align: "middle",
 			reserveSpace: true,
 			style: {
 				"color": "black"
@@ -102,21 +103,22 @@ Highcharts.chart("chart", {
 			x: 22,
 			y: -12
 		},
-		labels: {
-			align: "left",
-			x: 0,
-			y: 0,
-			reserveSpace: false,
-			style: {
-				color: "black"
-			},
-			formatter: function(){
-							return Highcharts.numberFormat(this.value * 100, 0, ".", ",") + "%";
-						}
-		},
+		//labels: {
+		//	align: "left",
+		//	x: 0,
+		//	y: 0,
+		//	reserveSpace: false,
+		//	style: {
+		//		color: "black"
+		//	},
+		//	formatter: function(){
+		//					return Highcharts.numberFormat(this.value * 100, 0, ".", ",") + "%";
+		//				}
+		//},
+		labels: {enabled: false},
 		opposite: true,			
-		gridLineColor: "black",
-		gridLineWidth: 0.25
+		//gridLineColor: "black",
+		gridLineWidth: 0
 	},
 	tooltip: {
 		backgroundColor: "white",
